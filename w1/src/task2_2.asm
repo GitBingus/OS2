@@ -17,12 +17,12 @@ segment .text
         mov ecx, 1
 
         fill_array:
-            mov [esi], ecx ;; store the current value of ecx in the array
-            add esi, 4 ;; does not add '4', it adds 4 bytes to the address in esi, which is the size of a dword (32 bits)
-            inc ecx ;; increment ecx to get the next number
+            mov [esi], ecx  ;; store the current value of ecx in the array
+            add esi, 4      ;; does not add '4', it adds 4 bytes to the address in esi, which is the size of a dword (32 bits)
+            inc ecx         ;; increment ecx to get the next number
 
-            cmp ecx, 101 ;; compare ecx with 101 to check if we have filled the array with numbers from 1 to 100
-            jl fill_array ;; if ecx is less than 101, jump back to fill_array to continue filling the array
+            cmp ecx, 101    ;; compare ecx with 101 to check if we have filled the array with numbers from 1 to 100
+            jl fill_array   ;; if ecx is less than 101, jump back to fill_array to continue filling the array
 
         ;; Print the numbers in the array
 
@@ -30,18 +30,18 @@ segment .text
         mov ecx, 0
 
         print_array:
-            mov eax, [esi]
+            mov eax, [esi]  ;; load the current number from the array
             call print_int
             call print_nl
 
-            add esi, 4
-            inc ecx
+            add esi, 4      ;; move to the next number in the array
+            inc ecx         ;; increment the counter
 
-            cmp ecx, 100
-            jl print_array
+            cmp ecx, 100    ;; compare the counter with 100 to check if we have printed all numbers
+            jl print_array  ;; if the counter is less than 100, jump back to print_array to continue printing the numbers
 
-
-        mov eax, 0 ;; returns 0
+        popa
+        mov eax, 0
 
         ret
 

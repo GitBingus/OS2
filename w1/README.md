@@ -15,3 +15,7 @@ This is the control flow and comparisons from Task 2. You can see in the CLI tha
 ![alt text](image-3.png)
 
 This is my implementation of the loop required to print the name X amount of times. I decided on a range-based for loop, since it would be easy to implement. All i did was set ebx to the value of 0, and incremented it by 1 on every iteration, exiting the loop when it reaches Counter, the user defined loop limit
+
+![alt text](image-4.png)![alt text](image-5.png)
+
+These two images are from Task 2_2, with the array with nunbers 1-100. I decided to go for a kind of unorthodox approach, where i would define a space for 100 integers in .bss, then fill them in with a for loop, by doing bitwise maths on the esi register to add 4 bytes, or 32 bits, to the dword, then filling in that space with the ecx register, which gets continuously incremented on every pass, until it reaches 100.
