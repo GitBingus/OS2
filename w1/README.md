@@ -18,4 +18,4 @@ This is my implementation of the loop required to print the name X amount of tim
 
 ![alt text](image-4.png)![alt text](image-5.png)
 
-These two images are from Task 2_2, with the array with nunbers 1-100. I decided to go for a kind of unorthodox approach, where i would define a space for 100 integers in .bss, then fill them in with a for loop, by doing bitwise maths on the esi register to add 4 bytes, or 32 bits, to the dword, then filling in that space with the ecx register, which gets continuously incremented on every pass, until it reaches 100.
+These two images are from Task 2_2, with the array with nunbers 1-100. I decided to go for a kind of unorthodox approach, where i would define a space for 100 integers in .bss, then fill them in with a for loop, by doing bitwise maths on the esi register to add 4 bytes, or 32 bits, to the dword, then filling in that space with the ecx register, which gets continuously incremented on every pass, until it reaches 100. For the sake of simplicity i only screenshotted the first and last 10 numbers outputted.
