@@ -11,3 +11,7 @@ This is from task1_2. The prompt works correctly, and does the maths correctly a
 ![alt text](image-2.png)
 
 This is the control flow and comparisons from Task 2. You can see in the CLI that my comparisons work perfectly, since it prints an error if 50 < number < 100
+
+![alt text](image-3.png)
+
+This is my implementation of the loop required to print the name X amount of times. I decided on a range-based for loop, since it would be easy to implement. All i did was set ebx to the value of 0, and incremented it by 1 on every iteration, exiting the loop when it reaches Counter, the user defined loop limit
