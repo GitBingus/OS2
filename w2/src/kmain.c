@@ -1,4 +1,5 @@
 #include "io.h"
+#include <stdbool.h>
 
 #define VGA_MEMORY ((volatile unsigned short *)0xB8000)
 
@@ -11,11 +12,16 @@
 #define FB_DARK_GREY   8
 #define FB_WHITE       15
 
+#define KBD_STATUS_PORT         0x64
+#define KBD_DATA_PORT           0x60
+
 /*
  * The VGA attribute byte uses:
  * bits 0-3: foreground colour
  * bits 4-6: background colour
  */
+
+// TODO: FIX KEYBOARD INPUT
 
 #define FB_COLOUR(fg, bg) (((bg) << 4) | (fg))
 
@@ -52,14 +58,78 @@ void kmain(void)
         VGA_MEMORY[i] = (unsigned short)(0x20 << 8) | ' ';
     }
 
-    // Put a white A in the top-left corner.
-    VGA_MEMORY[0] = (unsigned short)(0x2F << 8) | 'N';
-    VGA_MEMORY[1] = (unsigned short)(0x2F << 8) | 'I';
-    VGA_MEMORY[2] = (unsigned short)(0x2F << 8) | 'G';
-    VGA_MEMORY[3] = (unsigned short)(0x2F << 8) | 'G';
-    VGA_MEMORY[4] = (unsigned short)(0x2F << 8) | 'A';
+    unsigned short cursor = 0;
 
-    fb_move_cursor(0);
+    bool extended = false; // Used for extended keys, like arrow keys
+
+    while (1)
+    {
+        // Check whether keyboard data is available.
+        unsigned char status;
+
+        __asm__ volatile (
+            "inb %1, %0"
+            : "=a"(status)
+            : "Nd"(KBD_STATUS_PORT)
+        );
+
+        if (!(status & 0x01))
+            continue;
+
+
+        // Read the scan code.
+        unsigned char scan_code = read_scan_code();
+
+        if (extended) {
+            // Handle extended keys here if needed.
+            // Up: 48 Down: 50 Left: 4B Right: 4D
+
+            if (scan_code == 0x48) { // Up arrow
+                if (cursor >= SCREEN_WIDTH)
+                    cursor -= SCREEN_WIDTH;
+            } else if (scan_code == 0x50) { // Down arrow
+                if (cursor < SCREEN_WIDTH * (SCREEN_HEIGHT - 1))
+                    cursor += SCREEN_WIDTH;
+            } else if (scan_code == 0x4B) { // Left arrow
+                if (cursor > 0)
+                    cursor--;
+            } else if (scan_code == 0x4D) { // Right arrow
+                if (cursor < SCREEN_WIDTH * SCREEN_HEIGHT - 1)
+                    cursor++;
+            }
+
+            extended = false;
+            continue;
+        }
+
+        if (scan_code == 0xE0) {
+            extended = true;
+            
+            continue;
+        }
+
+        // Ignore key-release events for now.
+        if (scan_code & 0x80)
+            continue;
+
+        // Convert to ASCII.
+        char character = scan_code_to_ascii(scan_code);
+
+        if (character != 0)
+        {
+            // Write the character to VGA memory.
+            VGA_MEMORY[cursor] = (0x0F << 8) | character;
+
+            cursor++;
+
+            // Wrap around when reaching the end.
+            if (cursor >= 80 * 25)
+                cursor = 0;
+
+            // Update hardware cursor.
+            fb_move_cursor(cursor);
+        }
+    }
 }
 
 void print_result(int value)
