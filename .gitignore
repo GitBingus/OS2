@@ -4,3 +4,5 @@ a.out
 *.out
 w1/src/a.out
 logQ.txt
+w2/os.iso
+w2/iso/boot/kernel.elf

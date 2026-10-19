@@ -1,7 +1,3 @@
-SRC_DIR = src
-ISO_DIR = iso
-BOOT_DIR = $(ISO_DIR)/boot
-GRUB_DIR = $(BOOT_DIR)/grub
 # 1. Toolchain
 
 NASM = nasm
@@ -9,55 +5,65 @@ LD = ld
 CC = gcc
 GENISOIMAGE = genisoimage
 
-CFLAGS = -m32 -ffreestanding -fno-pie -fno-stack-protector -Wall -Wextra -c
+CFLAGS = -m32 -ffreestanding -fno-pie -fno-stack-protector -Wall -Wextra -c -I$(DRIVER_DIR) -O2
 
 # 2. Directory Configuration
 
-SRCDIR = src 
-ISODIR = iso 
-BOOTDIR = $(ISO_DIR)/boot 
-GRUBDIR = $(BOOT_DIR)/grub
+SRC_DIR = src
+DRIVER_DIR = drivers
+ISO_DIR = iso
+BOOT_DIR = $(ISO_DIR)/boot
+GRUB_DIR = $(BOOT_DIR)/grub
 
-# Source Files and Build Outputs
+# 3. Source Files and Build Outputs
 
 ASM_SRC = $(SRC_DIR)/loader.asm
 C_SRC = $(SRC_DIR)/kmain.c
+IO_SRC = $(DRIVER_DIR)/io.c
 LINKER = $(SRC_DIR)/link.ld
 
 ASM_OBJ = $(SRC_DIR)/loader.o
 C_OBJ = $(SRC_DIR)/kmain.o
-OBJECTS = $(ASM_OBJ) $(C_OBJ)
+IO_OBJ = $(DRIVER_DIR)/io.o
+
+OBJECTS = $(ASM_OBJ) $(C_OBJ) $(IO_OBJ)
 
 KERNEL = $(BOOT_DIR)/kernel.elf
 ISO = os.iso
 
-# GRUB boot image path, relative to iso/
+# GRUB boot image path, relative to the project root
 
 BOOTIMAGE = boot/grub/stage2_eltorito
 
 # 4. Default Target
 
-.PHONY: all 
+.PHONY: all
 all: $(ISO)
 
 # 5. Assemble the Bootloader
 
-$(ASM_OBJ): $(ASM_SRC) 
+$(ASM_OBJ): $(ASM_SRC)
 	$(NASM) -f elf $< -o $@
 
-# 5.5. Link C
+# 6. Compile the Kernel C Source
 
 $(C_OBJ): $(C_SRC)
 	$(CC) $(CFLAGS) $< -o $@
 
-# 6. Link the Kernel
+# 7. Compile the I/O Driver
+
+$(IO_OBJ): $(IO_SRC) $(DRIVER_DIR)/io.h
+	$(CC) $(CFLAGS) -I$(DRIVER_DIR) $(IO_SRC) -o $@
+
+# 8. Link the Kernel
 
 $(KERNEL): $(OBJECTS) $(LINKER)
+	mkdir -p $(BOOT_DIR)
 	$(LD) -T $(LINKER) -m elf_i386 $(OBJECTS) -o $@
 
-# 7. Build the Bootable ISO
+# 9. Build the Bootable ISO
 
-$(ISO): $(KERNEL) $(GRUB_DIR)/stage2_eltorito 
+$(ISO): $(KERNEL) $(GRUB_DIR)/stage2_eltorito
 	$(GENISOIMAGE) -R \
 		-b $(BOOTIMAGE) \
 		-no-emul-boot \
@@ -69,28 +75,34 @@ $(ISO): $(KERNEL) $(GRUB_DIR)/stage2_eltorito
 		-o $@ \
 		$(ISO_DIR)
 
-# 8. Clean Build Artifacts
+# 10. Clean Build Artifacts
 
-.PHONY: clean 
-clean: 
-	rm -f $(OBJ) $(KERNEL) $(ISO)
+.PHONY: clean
+clean:
+	rm -f $(OBJECTS) $(KERNEL) $(ISO)
 
-# 9. Full Rebuild
+# 11. Full Rebuild
 
-.PHONY: rebuild 
+.PHONY: rebuild
 rebuild: clean all
 
-# 10. Individual Build Targets
+# 12. Individual Build Targets
 
-.PHONY: kernel 
+.PHONY: kernel
 kernel: $(KERNEL)
 
-# Build the ISO.
-
-.PHONY: iso 
+.PHONY: iso
 iso: $(ISO)
 
-# 11. Help
+# 13. Help
 
-.PHONY: help 
-help: @echo "OS2 Build System" @echo "----------------" @echo "make - Build the ISO" @echo "make kernel - Build kernel.elf" @echo "make iso - Build os.iso" @echo "make clean - Remove generated files" @echo "make rebuild - Clean and rebuild everything" @echo "make help - Show available targets"
+.PHONY: help
+help:
+	@echo "OS2 Build System"
+	@echo "----------------"
+	@echo "make         - Build the ISO"
+	@echo "make kernel  - Build kernel.elf"
+	@echo "make iso     - Build os.iso"
+	@echo "make clean   - Remove generated files"
+	@echo "make rebuild - Clean and rebuild everything"
+	@echo "make help    - Show available targets"

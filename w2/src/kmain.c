@@ -1,3 +1,4 @@
+#include "io.h"
 
 #define VGA_MEMORY ((volatile unsigned short *)0xB8000)
 
@@ -57,6 +58,8 @@ void kmain(void)
     VGA_MEMORY[2] = (unsigned short)(0x2F << 8) | 'G';
     VGA_MEMORY[3] = (unsigned short)(0x2F << 8) | 'G';
     VGA_MEMORY[4] = (unsigned short)(0x2F << 8) | 'A';
+
+    fb_move_cursor(0);
 }
 
 void print_result(int value)

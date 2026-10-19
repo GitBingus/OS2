@@ -6,6 +6,15 @@
 #define FB_HIGH_BYTE_COMMAND    14
 #define FB_LOW_BYTE_COMMAND     15
 
+void outb(unsigned short port, unsigned char data)
+{
+    __asm__ volatile (
+        "outb %0, %1"
+        :
+        : "a"(data), "Nd"(port)
+    );
+}
+
 void fb_move_cursor(unsigned short pos)
 {
     outb(FB_COMMAND_PORT, FB_HIGH_BYTE_COMMAND);
