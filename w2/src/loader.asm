@@ -1,4 +1,3 @@
-
 global loader
 
 MAGIC_NUMBER equ 0x1BADB002
