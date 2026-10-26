@@ -118,3 +118,18 @@ help:
 	@echo "make clean   - Remove generated files"
 	@echo "make rebuild - Clean and rebuild everything"
 	@echo "make help    - Show available targets"
+	@echo "make run	    - Runs .iso im QEMU environment"
+
+
+# 14. Run
+
+.PHONY: run
+
+run: $(ISO)
+	qemu-system-i386 \
+	-monitor telnet:127.0.0.1:88888,server,nowait \
+	-serial mon:stdio \
+	-boot d \
+	-cdrom $(ISO) \
+	-m 32 \
+	-display curses
