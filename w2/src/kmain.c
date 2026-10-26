@@ -3,17 +3,6 @@
 #include "tui.h"
 #include <stdbool.h>
 
-#define VGA_MEMORY ((unsigned short *)0xB8000)
-
-#define SCREEN_WIDTH  80
-#define SCREEN_HEIGHT 25
-
-/* VGA colour values */
-#define FB_BLACK       0
-#define FB_GREEN       2
-#define FB_DARK_GREY   8
-#define FB_WHITE       15
-
 #define KBD_STATUS_PORT         0x64
 #define KBD_DATA_PORT           0x60
 

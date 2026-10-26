@@ -3,6 +3,17 @@
 
 #define FB_COLOUR(fg, bg) (((bg) << 4) | (fg))
 
+#define VGA_MEMORY ((unsigned short *)0xB8000)
+
+#define SCREEN_WIDTH  80
+#define SCREEN_HEIGHT 25
+
+/* VGA colour values */
+#define FB_BLACK       0
+#define FB_GREEN       2
+#define FB_DARK_GREY   8
+#define FB_WHITE       15
+
 typedef struct {
     unsigned char BLACK;
     unsigned char BLUE;
