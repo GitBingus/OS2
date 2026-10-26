@@ -1,0 +1,33 @@
+.
+├── Makefile
+├── drivers
+│   ├── io.c
+│   ├── io.h
+│   └── io.o
+├── include
+│   └── kbool.h
+├── iso
+│   └── boot
+│       ├── grub
+│       │   ├── menu.lst
+│       │   └── stage2_eltorito
+│       └── kernel.elf
+├── os.iso
+├── src
+│   ├── framebuffer
+│   │   ├── fb.c
+│   │   ├── fb.h
+│   │   └── fb.o
+│   ├── kernel.elf
+│   ├── kmain.c
+│   ├── kmain.o
+│   ├── link.ld
+│   ├── loader.asm
+│   ├── loader.o
+│   └── tui
+│       ├── tui.c
+│       ├── tui.h
+│       └── tui.o
+└── tree.txt
+
+9 directories, 22 files

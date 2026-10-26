@@ -1,5 +1,7 @@
-#include "fb.h"
 #include "io.h"
+#include "fb.h"
+#include "tui.h"
+#include "kbool.h"
 
 /* Write one character and its colour to a screen cell. */
 void fb_write_cell(unsigned int i, char c,

@@ -1,5 +1,7 @@
 #include "io.h"
 #include "fb.h"
+#include "tui.h"
+#include "kbool.h"
 
 #define KBD_DATA_PORT           0x60
 
