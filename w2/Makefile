@@ -17,6 +17,7 @@ FRAMEBUFFER_DIR = $(SRC_DIR)/framebuffer
 TUI_DIR = $(SRC_DIR)/tui
 BOOT_DIR = $(ISO_DIR)/boot
 GRUB_DIR = $(BOOT_DIR)/grub
+GDT_DIR = $(SRC_DIR)/gdt
 
 # 3. Compiler Flags
 
@@ -30,6 +31,8 @@ ASM_SRC = $(SRC_DIR)/loader.asm
 C_SRC = $(SRC_DIR)/kmain.c
 IO_SRC = $(DRIVER_DIR)/io.c
 TUI_SRC = $(TUI_DIR)/tui.c
+GDT_C_SRC = $(GDT_DIR)/gdt.c
+GDT_ASM_SRC = $(GDT_DIR)/gdt.asm
 FB_SRC = $(FRAMEBUFFER_DIR)/fb.c
 LINKER = $(SRC_DIR)/link.ld
 
@@ -38,9 +41,11 @@ C_OBJ = $(SRC_DIR)/kmain.o
 IO_OBJ = $(DRIVER_DIR)/io.o
 TUI_OBJ = $(TUI_DIR)/tui.o
 FB_OBJ = $(FRAMEBUFFER_DIR)/fb.o
+GDT_C_OBJ = $(GDT_DIR)/gdt.o
+GDT_ASM_OBJ = $(GDT_DIR)/gdt_asm.o
 
-C_OBJECTS = $(C_OBJ) $(IO_OBJ) $(TUI_OBJ) $(FB_OBJ)
-OBJECTS = $(ASM_OBJ) $(C_OBJECTS)
+C_OBJECTS = $(C_OBJ) $(IO_OBJ) $(TUI_OBJ) $(FB_OBJ) $(GDT_C_OBJ)
+OBJECTS = $(ASM_OBJ) $(GDT_ASM_OBJ) $(C_OBJECTS)
 DEPS = $(C_OBJECTS:.o=.d)
 
 KERNEL = $(BOOT_DIR)/kernel.elf
@@ -53,9 +58,12 @@ BOOTIMAGE = boot/grub/stage2_eltorito
 .PHONY: all
 all: $(ISO)
 
-# 6. Assemble Bootloader
+# 6. Assemble Bootloader & GDT
 
 $(ASM_OBJ): $(ASM_SRC)
+	$(NASM) -f elf32 $< -o $@
+
+$(GDT_ASM_OBJ): $(GDT_ASM_SRC)
 	$(NASM) -f elf32 $< -o $@
 
 # 7. Compile C Source Files

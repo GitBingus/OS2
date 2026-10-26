@@ -3,9 +3,6 @@
 #include "tui.h"
 #include "kbool.h"
 
-#define KBD_STATUS_PORT         0x64
-#define KBD_DATA_PORT           0x60
-
 void kmain(void)
 {
     fb_clear(COLOUR.BLACK); // Clears the screen

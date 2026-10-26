@@ -3,8 +3,6 @@
 #include "tui.h"
 #include "kbool.h"
 
-#define KBD_DATA_PORT           0x60
-
 unsigned char read_scan_code(void) {
     unsigned char scan_code;
     __asm__ volatile (
