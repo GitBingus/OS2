@@ -110,7 +110,7 @@ iso: $(ISO)
 run: $(ISO)
 	$(QEMU) \
 		-monitor telnet:127.0.0.1:8888,server,nowait \
-		-serial mon:stdio \
+		-serial null \
 		-boot d \
 		-cdrom $(ISO) \
 		-m 32 \
