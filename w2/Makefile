@@ -56,7 +56,7 @@ $(ASM_OBJ): $(ASM_SRC)
 $(C_OBJ): $(C_SRC)
 	$(CC) $(CFLAGS) $< -o $@
 
-# 7. Compile the drivers and other c files
+# 7. Compile the drivers and other C files
 
 $(IO_OBJ): $(IO_SRC) $(DRIVER_DIR)/io.h
 	$(CC) $(CFLAGS) -I$(DRIVER_DIR) $(IO_SRC) -o $@

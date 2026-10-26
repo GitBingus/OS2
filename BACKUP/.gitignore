@@ -1,0 +1,10 @@
+a.out
+.env
+*.o
+*.out
+w1/src/a.out
+logQ.txt
+w2/os.iso
+w2/iso/boot/kernel.elf
+w2/os.iso
+w2/os.iso

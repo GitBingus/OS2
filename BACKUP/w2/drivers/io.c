@@ -1,0 +1,104 @@
+#include "io.h"
+
+#define VGA_MEMORY ((volatile unsigned short *)0xB8000)
+
+#define FB_COMMAND_PORT         0x3D4
+#define FB_DATA_PORT            0x3D5
+
+#define FB_HIGH_BYTE_COMMAND    14
+#define FB_LOW_BYTE_COMMAND     15
+
+#define KBD_DATA_PORT           0x60
+
+#define SCREEN_WIDTH            80
+#define SCREEN_HEIGHT           25
+
+void fb_clear(unsigned char background)
+{
+    const unsigned char foreground = 0x0F;
+    const unsigned char attribute = (background << 4) | foreground;
+
+    for (unsigned int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++)
+    {
+        VGA_MEMORY[i] = ((unsigned short)attribute << 8) | ' ';
+    }
+
+    fb_move_cursor(0);
+}
+
+void outb(unsigned short port, unsigned char data) {
+    __asm__ volatile (
+        "outb %0, %1"
+        :
+        : "a"(data), "Nd"(port)
+    );
+}
+
+unsigned char read_scan_code(void) {
+    unsigned char scan_code;
+    __asm__ volatile (
+        "inb %1, %0"
+        : "=a"(scan_code)
+        : "Nd"(KBD_DATA_PORT)
+    );
+    return scan_code;
+}
+
+char scan_code_to_ascii(unsigned char scan_code)
+{
+    static const char keyboard_map[128] = {
+        [0x02] = '1',
+        [0x03] = '2',
+        [0x04] = '3',
+        [0x05] = '4',
+        [0x06] = '5',
+        [0x07] = '6',
+        [0x08] = '7',
+        [0x09] = '8',
+        [0x0A] = '9',
+        [0x0B] = '0',
+
+        [0x10] = 'q',
+        [0x11] = 'w',
+        [0x12] = 'e',
+        [0x13] = 'r',
+        [0x14] = 't',
+        [0x15] = 'y',
+        [0x16] = 'u',
+        [0x17] = 'i',
+        [0x18] = 'o',
+        [0x19] = 'p',
+
+        [0x1E] = 'a',
+        [0x1F] = 's',
+        [0x20] = 'd',
+        [0x21] = 'f',
+        [0x22] = 'g',
+        [0x23] = 'h',
+        [0x24] = 'j',
+        [0x25] = 'k',
+        [0x26] = 'l',
+
+        [0x2C] = 'z',
+        [0x2D] = 'x',
+        [0x2E] = 'c',
+        [0x2F] = 'v',
+        [0x30] = 'b',
+        [0x31] = 'n',
+        [0x32] = 'm',
+
+        [0x39] = ' '
+    };
+
+    if (scan_code >= 128)
+        return 0;
+
+    return keyboard_map[scan_code];
+}
+
+void fb_move_cursor(unsigned short pos) {
+    outb(FB_COMMAND_PORT, FB_HIGH_BYTE_COMMAND);
+    outb(FB_DATA_PORT,    ((pos >> 8) & 0x00FF));
+    outb(FB_COMMAND_PORT, FB_LOW_BYTE_COMMAND);
+    outb(FB_DATA_PORT,    pos & 0x00FF);
+}
