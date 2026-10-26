@@ -21,6 +21,9 @@ struct gdtr_entry
     unsigned int    base;
 } __attribute__((packed));
 
-void start_gdt(void);
+void setGDT(void);
+
+// Assembly function that loads the GDTR and reloads segment registers
+extern void lgdt_init(struct gdtr_entry *gdtr);
 
 #endif

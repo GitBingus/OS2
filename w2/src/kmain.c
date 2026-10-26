@@ -2,10 +2,13 @@
 #include "fb.h"
 #include "tui.h"
 #include "kbool.h"
+#include "gdt.h"
 
 void kmain(void)
 {
     fb_clear(COLOUR.BLACK); // Clears the screen
+
+    setGDT();   // inits GDT
 
     unsigned char foreground = COLOUR.WHITE;
     unsigned char background = COLOUR.BLACK;

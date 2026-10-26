@@ -68,10 +68,12 @@ static inline void setGDTEntry(
 }
 
 void setGDT(void) {
-    setGDTEntry(0, 0, 0, 0x00, 0x00);       // fill with null
-    setGDTEntry(1, 0, 0xFFFFF, 0x9A, 0xC);  // kernel code  
-    setGDTEntry(2, 0, 0xFFFFF, 0x92, 0xC);  // kernel data
+    setGDTEntry(0, 0, 0, 0x00, 0x00);       // initialise null descriptor
+    setGDTEntry(1, 0, 0xFFFFF, 0x9A, 0xC);  // init kernel code  
+    setGDTEntry(2, 0, 0xFFFFF, 0x92, 0xC);  // init kernel data
 
-    gdtr_init.limit     = sizeof(gdt_init) - 1;
-    gdtr_init.base      = (unsigned int)&gdt_init;
+    gdtr_init.limit     = sizeof(gdt_init) - 1;     // sets GDTR limit
+    gdtr_init.base      = (unsigned int)&gdt_init;  // sets base address
+
+    lgdt_init(&gdtr_init);      // loads the GDT
 }
