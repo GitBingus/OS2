@@ -18,6 +18,7 @@ TUI_DIR = $(SRC_DIR)/tui
 BOOT_DIR = $(ISO_DIR)/boot
 GRUB_DIR = $(BOOT_DIR)/grub
 GDT_DIR = $(SRC_DIR)/gdt
+KEYBOARD_DIR = $(SRC_DIR)/keyboard
 
 # 3. Compiler Flags
 
@@ -34,6 +35,7 @@ TUI_SRC = $(TUI_DIR)/tui.c
 GDT_C_SRC = $(GDT_DIR)/gdt.c
 GDT_ASM_SRC = $(GDT_DIR)/gdt.asm
 FB_SRC = $(FRAMEBUFFER_DIR)/fb.c
+KB_SRC = $(KEYBOARD_DIR)/keyboard.c
 LINKER = $(SRC_DIR)/link.ld
 
 ASM_OBJ = $(SRC_DIR)/loader.o
@@ -43,8 +45,9 @@ TUI_OBJ = $(TUI_DIR)/tui.o
 FB_OBJ = $(FRAMEBUFFER_DIR)/fb.o
 GDT_C_OBJ = $(GDT_DIR)/gdt.o
 GDT_ASM_OBJ = $(GDT_DIR)/gdt_asm.o
+KB_OBJ = $(KEYBOARD_DIR)/keyboard.o
 
-C_OBJECTS = $(C_OBJ) $(IO_OBJ) $(TUI_OBJ) $(FB_OBJ) $(GDT_C_OBJ)
+C_OBJECTS = $(C_OBJ) $(IO_OBJ) $(TUI_OBJ) $(FB_OBJ) $(GDT_C_OBJ) $(KB_OBJ)
 OBJECTS = $(ASM_OBJ) $(GDT_ASM_OBJ) $(C_OBJECTS)
 DEPS = $(C_OBJECTS:.o=.d)
 

@@ -3,6 +3,7 @@
 #include "tui.h"
 #include "kbool.h"
 #include "gdt.h"
+#include "keyboard.h"
 
 void kmain(void)
 {

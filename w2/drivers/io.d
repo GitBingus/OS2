@@ -1,6 +1,3 @@
-drivers/io.o: drivers/io.c include/io.h include/fb.h include/tui.h \
- include/kbool.h
+drivers/io.o: drivers/io.c include/io.h include/keyboard.h
 include/io.h:
-include/fb.h:
-include/tui.h:
-include/kbool.h:
+include/keyboard.h:

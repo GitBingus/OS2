@@ -1,7 +1,5 @@
 #include "io.h"
-#include "fb.h"
-#include "tui.h"
-#include "kbool.h"
+#include "keyboard.h"
 
 unsigned char read_scan_code(void) {
     unsigned char scan_code;
