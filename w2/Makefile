@@ -5,13 +5,15 @@ LD = ld
 CC = gcc
 GENISOIMAGE = genisoimage
 
-CFLAGS = -m32 -ffreestanding -fno-pie -fno-stack-protector -Wall -Wextra -c -I$(DRIVER_DIR) -O2
+CFLAGS = -m32 -ffreestanding -fno-pie -fno-stack-protector -Wall -Wextra -Werror -c -I$(DRIVER_DIR) -I$(FRAMEBUFFER_DIR) -I$(TUI_DIR)
 
 # 2. Directory Configuration
 
 SRC_DIR = src
 DRIVER_DIR = drivers
 ISO_DIR = iso
+FRAMEBUFFER_DIR = $(SRC_DIR)/framebuffer
+TUI_DIR = $(SRC_DIR)/tui
 BOOT_DIR = $(ISO_DIR)/boot
 GRUB_DIR = $(BOOT_DIR)/grub
 
@@ -20,13 +22,17 @@ GRUB_DIR = $(BOOT_DIR)/grub
 ASM_SRC = $(SRC_DIR)/loader.asm
 C_SRC = $(SRC_DIR)/kmain.c
 IO_SRC = $(DRIVER_DIR)/io.c
+TUI_SRC = $(TUI_DIR)/tui.c
+FB_SRC = $(FRAMEBUFFER_DIR)/fb.c
 LINKER = $(SRC_DIR)/link.ld
 
 ASM_OBJ = $(SRC_DIR)/loader.o
 C_OBJ = $(SRC_DIR)/kmain.o
 IO_OBJ = $(DRIVER_DIR)/io.o
+TUI_OBJ = $(TUI_DIR)/tui.o
+FB_OBJ = $(FRAMEBUFFER_DIR)/fb.o
 
-OBJECTS = $(ASM_OBJ) $(C_OBJ) $(IO_OBJ)
+OBJECTS = $(ASM_OBJ) $(C_OBJ) $(IO_OBJ) $(TUI_OBJ) $(FB_OBJ)
 
 KERNEL = $(BOOT_DIR)/kernel.elf
 ISO = os.iso
@@ -50,10 +56,16 @@ $(ASM_OBJ): $(ASM_SRC)
 $(C_OBJ): $(C_SRC)
 	$(CC) $(CFLAGS) $< -o $@
 
-# 7. Compile the I/O Driver
+# 7. Compile the drivers and other c files
 
 $(IO_OBJ): $(IO_SRC) $(DRIVER_DIR)/io.h
 	$(CC) $(CFLAGS) -I$(DRIVER_DIR) $(IO_SRC) -o $@
+
+$(TUI_OBJ): $(TUI_SRC) $(TUI_DIR)/tui.h
+	$(CC) $(CFLAGS) -I$(TUI_DIR) $(TUI_SRC) -o $(TUI_DIR)/tui.o
+
+$(FB_OBJ): $(FB_SRC) $(FRAMEBUFFER_DIR)/fb.h
+	$(CC) $(CFLAGS) -I$(FRAMEBUFFER_DIR) $(FB_SRC) -o $(FRAMEBUFFER_DIR)/fb.o
 
 # 8. Link the Kernel
 

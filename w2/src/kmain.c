@@ -1,4 +1,6 @@
 #include "io.h"
+#include "fb.h"
+#include "tui.h"
 #include <stdbool.h>
 
 #define VGA_MEMORY ((unsigned short *)0xB8000)
@@ -21,50 +23,7 @@
  * bits 4-6: background colour
 */
 
-#define FB_COLOUR(fg, bg) (((bg) << 4) | (fg))
 
-typedef struct {
-    unsigned char BLACK;
-    unsigned char BLUE;
-    unsigned char GREEN;
-    unsigned char CYAN;
-    unsigned char RED;
-    unsigned char MAGENTA;
-    unsigned char BROWN;
-    unsigned char LIGHT_GREY;
-    unsigned char DARK_GREY;
-    unsigned char LIGHT_BLUE;
-    unsigned char LIGHT_GREEN;
-    unsigned char LIGHT_CYAN;
-    unsigned char LIGHT_RED;
-    unsigned char LIGHT_MAGENTA;
-    unsigned char YELLOW;
-    unsigned char WHITE;
-} VGAColours;
-
-static const VGAColours COLOUR = {
-    .BLACK         = 0x0,
-    .BLUE          = 0x1,
-    .GREEN         = 0x2,
-    .CYAN          = 0x3,
-    .RED           = 0x4,
-    .MAGENTA       = 0x5,
-    .BROWN         = 0x6,
-    .LIGHT_GREY    = 0x7,
-    .DARK_GREY     = 0x8,
-    .LIGHT_BLUE    = 0x9,
-    .LIGHT_GREEN   = 0xA,
-    .LIGHT_CYAN    = 0xB,
-    .LIGHT_RED     = 0xC,
-    .LIGHT_MAGENTA = 0xD,
-    .YELLOW        = 0xE,
-    .WHITE         = 0xF
-};
-
-int sum_of_three(int arg1, int arg2, int arg3)
-{
-    return arg1 + arg2 + arg3;
-}
 
 /* Write one character and its colour to a screen cell. */
 void fb_write_cell(unsigned int i, char c,
@@ -163,8 +122,8 @@ void kmain(void)
         }
 
         // Ignore key-release events for now.
-        if (scan_code & 0x80)
-            continue;
+        // if (scan_code & 0x80)
+        //      continue;
 
         // ENTER
         if (scan_code == 0x1C)
