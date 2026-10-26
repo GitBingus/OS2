@@ -1,5 +1,7 @@
 #include "io.h"
 
+#define VGA_MEMORY ((volatile unsigned short *)0xB8000)
+
 #define FB_COMMAND_PORT         0x3D4
 #define FB_DATA_PORT            0x3D5
 
@@ -7,6 +9,22 @@
 #define FB_LOW_BYTE_COMMAND     15
 
 #define KBD_DATA_PORT           0x60
+
+#define SCREEN_WIDTH            80
+#define SCREEN_HEIGHT           25
+
+void fb_clear(unsigned char background)
+{
+    const unsigned char foreground = 0x0F;
+    const unsigned char attribute = (background << 4) | foreground;
+
+    for (unsigned int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++)
+    {
+        VGA_MEMORY[i] = ((unsigned short)attribute << 8) | ' ';
+    }
+
+    fb_move_cursor(0);
+}
 
 void outb(unsigned short port, unsigned char data) {
     __asm__ volatile (
