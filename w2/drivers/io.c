@@ -1,38 +1,7 @@
 #include "io.h"
-
-#define VGA_MEMORY ((volatile unsigned short *)0xB8000)
-
-#define FB_COMMAND_PORT         0x3D4
-#define FB_DATA_PORT            0x3D5
-
-#define FB_HIGH_BYTE_COMMAND    14
-#define FB_LOW_BYTE_COMMAND     15
+#include "fb.h"
 
 #define KBD_DATA_PORT           0x60
-
-#define SCREEN_WIDTH            80
-#define SCREEN_HEIGHT           25
-
-void fb_clear(unsigned char background)
-{
-    const unsigned char foreground = 0x0F;
-    const unsigned char attribute = (background << 4) | foreground;
-
-    for (unsigned int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++)
-    {
-        VGA_MEMORY[i] = ((unsigned short)attribute << 8) | ' ';
-    }
-
-    fb_move_cursor(0);
-}
-
-void outb(unsigned short port, unsigned char data) {
-    __asm__ volatile (
-        "outb %0, %1"
-        :
-        : "a"(data), "Nd"(port)
-    );
-}
 
 unsigned char read_scan_code(void) {
     unsigned char scan_code;
@@ -42,6 +11,15 @@ unsigned char read_scan_code(void) {
         : "Nd"(KBD_DATA_PORT)
     );
     return scan_code;
+}
+
+
+void outb(unsigned short port, unsigned char data) {
+    __asm__ volatile (
+        "outb %0, %1"
+        :
+        : "a"(data), "Nd"(port)
+    );
 }
 
 char scan_code_to_ascii(unsigned char scan_code)
@@ -94,11 +72,4 @@ char scan_code_to_ascii(unsigned char scan_code)
         return 0;
 
     return keyboard_map[scan_code];
-}
-
-void fb_move_cursor(unsigned short pos) {
-    outb(FB_COMMAND_PORT, FB_HIGH_BYTE_COMMAND);
-    outb(FB_DATA_PORT,    ((pos >> 8) & 0x00FF));
-    outb(FB_COMMAND_PORT, FB_LOW_BYTE_COMMAND);
-    outb(FB_DATA_PORT,    pos & 0x00FF);
 }

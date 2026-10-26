@@ -1,7 +1,6 @@
 *.env
 *.o
 *.out
-*.out
 logQ.txt
 *.iso
 *.elf

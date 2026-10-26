@@ -8,6 +8,12 @@
 #define SCREEN_WIDTH  80
 #define SCREEN_HEIGHT 25
 
+#define FB_COMMAND_PORT         0x3D4
+#define FB_DATA_PORT            0x3D5
+
+#define FB_HIGH_BYTE_COMMAND    14
+#define FB_LOW_BYTE_COMMAND     15
+
 /* VGA colour values */
 #define FB_BLACK       0
 #define FB_GREEN       2
@@ -51,5 +57,8 @@ static const VGAColours COLOUR = {
     .YELLOW        = 0xE,
     .WHITE         = 0xF
 };
+
+void fb_move_cursor(unsigned short pos);
+void fb_clear(unsigned char background);
 
 #endif

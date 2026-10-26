@@ -5,7 +5,7 @@ LD = ld
 CC = gcc
 GENISOIMAGE = genisoimage
 
-CFLAGS = -m32 -ffreestanding -fno-pie -fno-stack-protector -Wall -Wextra -Werror -c -I$(DRIVER_DIR) -I$(FRAMEBUFFER_DIR) -I$(TUI_DIR)
+CFLAGS = -m32 -ffreestanding -fno-pie -fno-stack-protector -Wall -Wextra -Werror -c -I$(DRIVER_DIR) -I$(FRAMEBUFFER_DIR) -I$(TUI_DIR) -Iinclude
 
 # 2. Directory Configuration
 
@@ -127,7 +127,7 @@ help:
 
 run: $(ISO)
 	qemu-system-i386 \
-	-monitor telnet:127.0.0.1:88888,server,nowait \
+	-monitor telnet:127.0.0.1:8888,server,nowait \
 	-serial mon:stdio \
 	-boot d \
 	-cdrom $(ISO) \

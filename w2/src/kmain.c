@@ -1,31 +1,10 @@
 #include "io.h"
 #include "fb.h"
 #include "tui.h"
-#include <stdbool.h>
+#include "kbool.h"
 
 #define KBD_STATUS_PORT         0x64
 #define KBD_DATA_PORT           0x60
-
-/*
- * The VGA attribute byte uses:
- * bits 0-3: foreground colour
- * bits 4-6: background colour
-*/
-
-
-
-/* Write one character and its colour to a screen cell. */
-void fb_write_cell(unsigned int i, char c,
-                   unsigned char fg, unsigned char bg)
-{
-    if (i >= SCREEN_WIDTH * SCREEN_HEIGHT)
-        return;
-
-    unsigned char attribute = FB_COLOUR(fg, bg);
-
-    VGA_MEMORY[i] = ((unsigned short)attribute << 8) |
-                    (unsigned char)c;
-}
 
 void kmain(void)
 {
