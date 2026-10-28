@@ -10,16 +10,16 @@ void pic_remap(void)
     // 2. Set vector offsets.
     outb(PIC1_DATA, PIC1_OFFSET);
     outb(PIC2_DATA, PIC2_OFFSET);
+}
 
-    void pic_acknowledge(unsigned char irq) {
-        // TODO: If IRQ is from slave, acknowledge slave.
+void pic_acknowledge(unsigned char irq) {
+    // TODO: If IRQ is from slave, acknowledge slave.
 
-        // TODO: Always acknowledge master.
-    }
+    // TODO: Always acknowledge master.
+}
 
     // TODO: Configure master/slave wiring (ICW3).
 
     // TODO: Configure 8086 mode (ICW4).
 
     // TODO: Set safe interrupt masks.
-}
