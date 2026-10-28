@@ -21,7 +21,64 @@ void tui_putchar(char c) {
 
     fb_move_cursor(tui_cursor);
 
-}   
+}
+
+void tui_write(cstring str) {
+    while (*str != '\0')
+    {
+        tui_putchar(*str);
+        str++;
+    }
+}
+
+void tui_handle_key(keyboard_event_t event) {
+    switch (event.key)
+    {
+        case KEY_CHARACTER:
+            tui_putchar(event.character);
+
+            break;
+
+        case KEY_ENTER:
+            tui_newline();
+
+            break;
+
+        case KEY_BACKSPACE:
+            tui_backspace();
+
+            break;
+
+        case KEY_TAB:
+            tui_tab();
+
+            break;
+
+        case KEY_UP:
+            tui_move_up();
+
+            break;
+
+        case KEY_DOWN:
+            tui_move_down();
+
+            break;
+
+        case KEY_LEFT:
+            tui_move_left();
+
+            break;
+
+        case KEY_RIGHT:
+            tui_move_right();
+            
+            break;
+
+        case KEY_NONE:
+        default:
+            break;
+    }
+}
 
 void tui_tab(void)
 {

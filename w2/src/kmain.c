@@ -7,7 +7,14 @@ void kmain(void)
     setGDT();
     tui_init();
 
-    tui_putchar('>');
+    tui_write("Welcome to OS2!");
 
-    monitor_kb();
+    while (1) {
+        keyboard_event_t event = keyboard_poll();
+
+        if (event.key == KEY_NONE)
+            continue;
+
+        tui_handle_key(event);
+    }
 }
