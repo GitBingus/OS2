@@ -19,6 +19,7 @@ BOOT_DIR = $(ISO_DIR)/boot
 GRUB_DIR = $(BOOT_DIR)/grub
 GDT_DIR = $(SRC_DIR)/gdt
 KEYBOARD_DIR = $(SRC_DIR)/keyboard
+KSTRING_DIR = $(DRIVER_DIR)
 
 # 3. Compiler Flags
 
@@ -36,7 +37,10 @@ GDT_C_SRC = $(GDT_DIR)/gdt.c
 GDT_ASM_SRC = $(GDT_DIR)/gdt.asm
 FB_SRC = $(FRAMEBUFFER_DIR)/fb.c
 KB_SRC = $(KEYBOARD_DIR)/keyboard.c
+KSTRING_SRC = $(KSTRING_DIR)/kstring.c
+
 LINKER = $(SRC_DIR)/link.ld
+
 
 ASM_OBJ = $(SRC_DIR)/loader.o
 C_OBJ = $(SRC_DIR)/kmain.o
@@ -46,8 +50,9 @@ FB_OBJ = $(FRAMEBUFFER_DIR)/fb.o
 GDT_C_OBJ = $(GDT_DIR)/gdt.o
 GDT_ASM_OBJ = $(GDT_DIR)/gdt_asm.o
 KB_OBJ = $(KEYBOARD_DIR)/keyboard.o
+KSTRING_OBJ = $(KSTRING_DIR)/kstring.o
 
-C_OBJECTS = $(C_OBJ) $(IO_OBJ) $(TUI_OBJ) $(FB_OBJ) $(GDT_C_OBJ) $(KB_OBJ)
+C_OBJECTS = $(C_OBJ) $(IO_OBJ) $(TUI_OBJ) $(FB_OBJ) $(GDT_C_OBJ) $(KB_OBJ) $(KSTRING_OBJ)
 OBJECTS = $(ASM_OBJ) $(GDT_ASM_OBJ) $(C_OBJECTS)
 DEPS = $(C_OBJECTS:.o=.d)
 
