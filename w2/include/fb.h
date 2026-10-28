@@ -3,7 +3,7 @@
 
 #define FB_COLOUR(fg, bg) (((bg) << 4) | (fg))
 
-#define VGA_MEMORY ((unsigned short *)0xB8000)
+#define VGA_MEMORY ((volatile unsigned short *)0xB8000)
 
 #define SCREEN_WIDTH  80
 #define SCREEN_HEIGHT 25
