@@ -6,3 +6,5 @@ logQ.txt
 *.elf
 w2/TODO
 *.zip
+*.d
+*.D
