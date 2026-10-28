@@ -1,7 +1,5 @@
 #include "io.h"
 #include "fb.h"
-#include "tui.h"
-#include "kbool.h"
 
 const unsigned char foreground = 0x0F;
 const unsigned char background = 0x00;
@@ -10,8 +8,7 @@ const unsigned short screen_size = SCREEN_WIDTH * SCREEN_HEIGHT;
 
 /* Write one character and its colour to a screen cell. */
 void fb_write_cell(unsigned int i, char c,
-                   unsigned char fg, unsigned char bg)
-{
+                   unsigned char fg, unsigned char bg) {
     if (i >= SCREEN_WIDTH * SCREEN_HEIGHT)
         return;
 
@@ -21,8 +18,7 @@ void fb_write_cell(unsigned int i, char c,
                     (unsigned char)c;
 }
 
-void fb_clear(unsigned char background)
-{
+void fb_clear(unsigned char background) {
     attribute = (background << 4) | foreground;
 
     for (unsigned int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++)

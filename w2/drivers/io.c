@@ -20,8 +20,7 @@ void outb(unsigned short port, unsigned char data) {
     );
 }
 
-char scan_code_to_ascii(unsigned char scan_code)
-{
+char scan_code_to_ascii(unsigned char scan_code) {
     static const char keyboard_map[128] = {
         [0x02] = '1',
         [0x03] = '2',

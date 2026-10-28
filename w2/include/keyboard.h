@@ -6,8 +6,9 @@
 
 #include "kbool.h"
 
-typedef enum
-{
+/* Keyboard only supports US style QWERTY -- May add UK style, Devorak, Colemak etc in future */
+
+typedef enum {
     KEY_NONE,
     KEY_CHARACTER,
     KEY_ENTER,
@@ -19,8 +20,7 @@ typedef enum
     KEY_RIGHT
 } keyboard_key_t;   // custom enum to simplify input types
 
-typedef struct
-{
+typedef struct {
     keyboard_key_t key;
     char character;
 } keyboard_event_t;
