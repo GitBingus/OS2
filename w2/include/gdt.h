@@ -5,20 +5,22 @@
 Defines GDT array of sizes 2, 2, 1, 1, 1, 1 respectively
 */
 
+#include "types.h"
+
 struct gdt_entry
 {
-    unsigned short      limit_low;
-    unsigned short      base_low;
-    unsigned char       base_mid;
-    unsigned char       access;
-    unsigned char       granularity;
-    unsigned char       base_high;
+    u16int      limit_low;
+    u16int      base_low;
+    u8int       base_mid;
+    u8int       access;
+    u8int       granularity;
+    u8int       base_high;
 } __attribute__((packed));
 
 struct gdtr_entry
 {
-    unsigned short  limit;
-    unsigned int    base;
+    u16int      limit;
+    u32int      base;
 } __attribute__((packed));
 
 void setGDT(void);
