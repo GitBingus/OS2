@@ -1,5 +1,9 @@
-#include "keyboard.h"
 #include "io.h"
+#include "fb.h"
+#include "tui.h"
+#include "kbool.h"
+#include "gdt.h"
+#include "keyboard.h"
 
 // Persistent keyboard state
 static bool extended = false;
@@ -7,6 +11,7 @@ static bool left_shift_pressed = false;
 static bool right_shift_pressed = false;
 static bool caps_lock = false;
 
+unsigned int cursor = 0;
 
 // Check whether the PS/2 controller has data available.
 bool keyboard_has_data(void)
@@ -168,4 +173,96 @@ keyboard_event_t keyboard_poll(void)
     unsigned char scan_code = read_scan_code();
 
     return keyboard_process_scancode(scan_code);
+}
+
+
+void monitor_kb(void) {
+    while (1)
+    {
+        // Read and interpret any available keyboard input
+        keyboard_event_t event = keyboard_poll();
+
+        if (event.key == KEY_NONE)
+            continue;
+
+        switch (event.key)
+        {
+            // Move cursor upwards
+            case KEY_UP:
+                if (cursor >= SCREEN_WIDTH)
+                    cursor -= SCREEN_WIDTH;
+                break;
+
+            // Move cursor downwards
+            case KEY_DOWN:
+                if (cursor < SCREEN_WIDTH * (SCREEN_HEIGHT - 1))
+                    cursor += SCREEN_WIDTH;
+                break;
+
+            // Move cursor left
+            case KEY_LEFT:
+                if (cursor > 0)
+                    cursor--;
+                break;
+
+            // Move cursor right
+            case KEY_RIGHT:
+                if (cursor < (unsigned int)screen_size - 1)
+                    cursor++;
+                break;
+
+            // Move to the beginning of the next line
+            case KEY_ENTER:
+                cursor = ((cursor / SCREEN_WIDTH) + 1) * SCREEN_WIDTH;
+
+                if (cursor >= screen_size)
+                    cursor = 0;
+                break;
+
+            // Remove the character before the cursor
+            case KEY_BACKSPACE:
+                if (cursor > 0)
+                {
+                    cursor--;
+
+                    VGA_MEMORY[cursor] =
+                        ((unsigned short)attribute << 8) | ' ';
+                }
+                break;
+
+            // Advance to the next tab stop (every 4 columns)
+            case KEY_TAB:
+            {
+                unsigned short column = cursor % SCREEN_WIDTH;
+                unsigned short spaces = 4 - (column % 4);
+
+                cursor += spaces;
+
+                if (cursor >= screen_size)
+                    cursor = 0;
+
+                break;
+            }
+
+            // Display a regular character
+            case KEY_CHARACTER:
+                VGA_MEMORY[cursor] =
+                    ((unsigned short)attribute << 8)
+                    | (unsigned char)event.character;
+
+                cursor++;
+
+                if (cursor >= screen_size)
+                    cursor = 0;
+
+                break;
+
+            case KEY_NONE:
+            default:
+                break;
+        }
+
+        // Update the hardware cursor after processing the event
+        fb_move_cursor(cursor);
+    }
 }

@@ -17,7 +17,7 @@ typedef enum
     KEY_DOWN,
     KEY_LEFT,
     KEY_RIGHT
-} keyboard_key_t;
+} keyboard_key_t;   // custom enum to simplify input types
 
 typedef struct
 {
@@ -25,13 +25,18 @@ typedef struct
     char character;
 } keyboard_event_t;
 
-// Returns true when the keyboard controller has data.
+extern unsigned int cursor;
+
+// Returns true when the keyboard controller has data
 bool keyboard_has_data(void);
 
-// Processes a single raw scancode.
+// Processes a single raw scancode
 keyboard_event_t keyboard_process_scancode(unsigned char scan_code);
 
-// Polls the keyboard and returns an event, if one is available.
+// Polls the keyboard and returns an event, if one is available
 keyboard_event_t keyboard_poll(void);
+
+// Constantly monitors kb
+void monitor_kb(void);
 
 #endif

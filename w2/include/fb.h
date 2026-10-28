@@ -58,6 +58,11 @@ static const VGAColours COLOUR = {
     .WHITE         = 0xF
 };
 
+extern const unsigned char foreground;
+extern const unsigned char background;
+extern unsigned char attribute;
+extern const unsigned short screen_size;
+
 void fb_move_cursor(unsigned short pos);
 void fb_clear(unsigned char background);
 

@@ -3,6 +3,11 @@
 #include "tui.h"
 #include "kbool.h"
 
+const unsigned char foreground = 0x0F;
+const unsigned char background = 0x00;
+unsigned char attribute = FB_COLOUR(0x0F, 0x00);
+const unsigned short screen_size = SCREEN_WIDTH * SCREEN_HEIGHT;
+
 /* Write one character and its colour to a screen cell. */
 void fb_write_cell(unsigned int i, char c,
                    unsigned char fg, unsigned char bg)
@@ -18,14 +23,12 @@ void fb_write_cell(unsigned int i, char c,
 
 void fb_clear(unsigned char background)
 {
-    const unsigned char foreground = 0x0F;
-    const unsigned char attribute = (background << 4) | foreground;
+    attribute = (background << 4) | foreground;
 
     for (unsigned int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++)
     {
         VGA_MEMORY[i] = ((unsigned short)attribute << 8) | ' ';
     }
-
     fb_move_cursor(0);
 }
 
