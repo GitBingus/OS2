@@ -2,8 +2,7 @@
 #include "io.h"
 #include "types.h"
 
-void pic_remap(void)
-{
+void pic_remap(void) {
     // PIC initialisation
 
     outb(PIC1_COMMAND, 0x11);
@@ -30,17 +29,10 @@ void pic_remap(void)
     outb(PIC2_DATA, 0xFF);
 }
 
-void pic_acknowledge(u8int irq)
-{
+void pic_acknowledge(u8int irq) {
     if (irq >= 8) {
         outb(PIC2_COMMAND, PIC_EOI);
     }
 
     outb(PIC1_COMMAND, PIC_EOI);
 }
-
-    // TODO: Configure master/slave wiring (ICW3).
-
-    // TODO: Configure 8086 mode (ICW4).
-
-    // TODO: Set safe interrupt masks.
