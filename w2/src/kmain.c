@@ -1,16 +1,13 @@
-#include "fb.h"
 #include "gdt.h"
 #include "keyboard.h"
+#include "tui.h"
 
-
-void kmain(void) {
-    // Initialise the framebuffer and GDT
-    fb_clear(COLOUR.BLACK);
-    cursor = 0;
-
+void kmain(void)
+{
     setGDT();
+    tui_init();
 
-    fb_move_cursor(cursor);
+    tui_putchar('>');
 
     monitor_kb();
 }
