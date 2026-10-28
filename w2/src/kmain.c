@@ -7,7 +7,9 @@ void kmain(void)
     setGDT();
     tui_init();
 
-    tui_write("Welcome to OS2!");
+    tui_write("Welcome to OS2!\n");
+    tui_write("Keyboard initialised.\n\n");
+    tui_write("> ");
 
     while (1) {
         keyboard_event_t event = keyboard_poll();

@@ -13,6 +13,11 @@ void tui_init(void) {   // init tui
 void tui_putchar(char c) {
     /* write one character at the current cursor position, advance the cursor and update the hardware cursor */
 
+    if (c == '\n') {
+        tui_newline();
+        return;
+    }
+
     fb_write_cell(tui_cursor, c, foreground, background);
     tui_cursor++;
 
@@ -71,7 +76,7 @@ void tui_handle_key(keyboard_event_t event) {
 
         case KEY_RIGHT:
             tui_move_right();
-            
+
             break;
 
         case KEY_NONE:
