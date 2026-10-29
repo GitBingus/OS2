@@ -40,5 +40,6 @@ keyboard_event_t keyboard_poll(void);
 void monitor_kb(void);
 
 bool keyboard_dequeue(keyboard_event_t *event);
+void keyboard_irq_handler(void);
 
 #endif

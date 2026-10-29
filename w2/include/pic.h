@@ -12,7 +12,10 @@
 
 #define PIC_EOI 0x20
 
+#include "types.h"
+
 void pic_remap(void);
-void pic_acknowledge(unsigned char irq);
+void pic_acknowledge(u8int irq);
+void pic_unmask_irq(u8int irq);
 
 #endif // PIC_H

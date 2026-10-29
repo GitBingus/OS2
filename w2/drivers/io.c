@@ -11,6 +11,19 @@ unsigned char read_scan_code(void) {
     return scan_code;
 }
 
+u8int inb(u16int port)
+{
+    u8int result;
+
+    __asm__ volatile (
+        "inb %1, %0"
+        : "=a"(result)
+        : "Nd"(port)
+    );
+
+    return result;
+}
+
 
 void outb(unsigned short port, unsigned char data) {
     __asm__ volatile (

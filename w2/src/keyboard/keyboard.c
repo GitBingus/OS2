@@ -2,6 +2,7 @@
 #include "tui.h"
 #include "kbool.h"
 #include "keyboard.h"
+#include "pic.h"
 
 #define KEYBOARD_BUFFER_SIZE 64
 
@@ -15,6 +16,8 @@ static keyboard_event_t keyboard_buffer[KEYBOARD_BUFFER_SIZE];  // stores up to 
 
 static volatile unsigned int buffer_head = 0;   // indicates where the next event will be inserted
 static volatile unsigned int buffer_tail = 0;   // indicates which event the main loop should read next
+
+static void keyboard_enqueue(keyboard_event_t event);
 
 // Check whether the PS/2 controller has data available
 bool keyboard_has_data(void)
@@ -181,8 +184,7 @@ keyboard_event_t keyboard_poll(void)
 void keyboard_irq_handler(void) {
     unsigned char scan_code = read_scan_code();
 
-    keyboard_event_t event =
-        keyboard_process_scancode(scan_code);
+    keyboard_event_t event = keyboard_process_scancode(scan_code);
 
     if (event.key != KEY_NONE) {
         keyboard_enqueue(event);
