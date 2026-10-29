@@ -39,4 +39,6 @@ keyboard_event_t keyboard_poll(void);
 // Constantly monitors kb
 void monitor_kb(void);
 
+bool keyboard_dequeue(keyboard_event_t *event);
+
 #endif

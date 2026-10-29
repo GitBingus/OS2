@@ -3,11 +3,18 @@
 #include "kbool.h"
 #include "keyboard.h"
 
+#define KEYBOARD_BUFFER_SIZE 64
+
 // Persistent keyboard state
 static bool extended = false;
 static bool left_shift_pressed = false;
 static bool right_shift_pressed = false;
 static bool caps_lock = false;
+
+static keyboard_event_t keyboard_buffer[KEYBOARD_BUFFER_SIZE];  // stores up to 63 pending events using the simple one-empty-slot design
+
+static volatile unsigned int buffer_head = 0;   // indicates where the next event will be inserted
+static volatile unsigned int buffer_tail = 0;   // indicates which event the main loop should read next
 
 // Check whether the PS/2 controller has data available
 bool keyboard_has_data(void)
@@ -169,4 +176,37 @@ keyboard_event_t keyboard_poll(void)
     unsigned char scan_code = read_scan_code();
 
     return keyboard_process_scancode(scan_code);
+}
+
+void keyboard_irq_handler(void) {
+    unsigned char scan_code = read_scan_code();
+
+    keyboard_event_t event =
+        keyboard_process_scancode(scan_code);
+
+    if (event.key != KEY_NONE) {
+        keyboard_enqueue(event);
+    }
+
+    pic_acknowledge(1);
+}
+
+static void keyboard_enqueue(keyboard_event_t event) {
+    unsigned int next = (buffer_head + 1) % KEYBOARD_BUFFER_SIZE;
+
+    if (next == buffer_tail) {
+        return;
+    }
+
+    keyboard_buffer[buffer_head] = event;
+    buffer_head = next;
+}
+
+bool keyboard_dequeue(keyboard_event_t *event) {
+    if (buffer_head == buffer_tail) {return false;}
+
+    *event = keyboard_buffer[buffer_tail];
+    buffer_tail = (buffer_tail + 1) % KEYBOARD_BUFFER_SIZE;
+
+    return true;
 }
