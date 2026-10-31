@@ -149,8 +149,6 @@ exception_common:
     mov [esp], eax
     call exception_handler
 
-    .halt
-
     .halt:
         cli
         hlt

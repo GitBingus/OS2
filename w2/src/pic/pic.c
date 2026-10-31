@@ -25,7 +25,7 @@ void pic_remap(void) {
 
     // add IRQ masking
 
-    outb(PIC1_DATA, 0xFD);  // unmask IRQ1
+    outb(PIC1_DATA, 0xFF);  // unmask IRQ1
     outb(PIC2_DATA, 0xFF);
 }
 
