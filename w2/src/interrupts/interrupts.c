@@ -1,5 +1,6 @@
 #include "interrupts.h"
 #include "types.h"
+#include "tui.h"
 
 #define IDT_ENTRIES 256
 
@@ -44,6 +45,17 @@ void idt_init(void) {
         ATTR
     );
 
+    idt_set_gate(0, (u32int)interrupt_handler_0, 0x08, 0x8E);
+
     // Load the IDT
     idt_load(&idtr);
+}
+
+void exception_handler_0(void)
+{
+    tui_write("CPU EXCEPTION: DIVISION ERROR\n");
+
+    for (;;) {
+        __asm__ volatile("cli; hlt");
+    }
 }

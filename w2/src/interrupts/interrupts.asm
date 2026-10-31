@@ -1,6 +1,9 @@
 global interrupt_handler_33
 extern keyboard_irq_handler
 
+global interrupt_handler_0
+extern exception_handler_0
+
 interrupt_handler_33:
     pushad                      ; saves all GP registers
 
@@ -26,3 +29,30 @@ interrupt_handler_33:
     popad                       ; restores registers
 
     iretd                       ; returns to interrupted code
+
+
+interrupt_handler_0:
+    pushad
+
+    push ds
+    push es
+    push fs
+    push gs
+
+    ; ensure kernel data segments are loaded if necessary
+
+    cld
+
+    ; call C
+
+    call exception_handler_0
+
+    ; restore registers
+
+    pop gs
+    pop fs
+    pop es
+    pop ds
+
+    popad
+    iretd

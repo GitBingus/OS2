@@ -3,7 +3,10 @@
 
 #include "types.h"
 
+
+extern void interrupt_handler_0(void);
 extern void interrupt_handler_33(void);
+
 
 struct idt_entry {
     u16int offset_low;

@@ -12,6 +12,20 @@ void kmain(void)
     pic_remap();
     idt_init();
 
+    tui_write("Testing division-by-zero exception...\n");
+
+    __asm__ volatile (
+        "movl $10, %%eax\n\t"
+        "xorl %%edx, %%edx\n\t"
+        "xorl %%ecx, %%ecx\n\t"
+        "divl %%ecx"
+        :
+        :
+        : "eax", "ecx", "edx", "cc"
+    );
+
+    tui_write("This should never print!\n");
+
     // Only after the interrupt handlers are verified:
     pic_unmask_irq(1);
     __asm__ volatile("sti");
