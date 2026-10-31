@@ -28,7 +28,7 @@ void kmain(void)
     pic_remap();
     idt_init();
 
-    test_div0();
+    // test_div0();
 
     pic_unmask_irq(1);
     __asm__ volatile("sti");
