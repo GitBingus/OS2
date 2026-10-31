@@ -1,8 +1,9 @@
-global interrupt_handler_33
-extern keyboard_irq_handler
-
 global interrupt_handler_0
-extern exception_handler_0
+global interrupt_handler_6
+global interrupt_handler_33
+
+extern keyboard_irq_handler
+extern exception_handler
 
 interrupt_handler_33:
     pushad                      ; saves all GP registers
@@ -32,6 +33,18 @@ interrupt_handler_33:
 
 
 interrupt_handler_0:
+    push dword 0                ; Dummy error code
+    push dword 0                ; Exception number
+    jmp exception_common
+
+
+interrupt_handler_6:
+    push dword 0                ; Dummy error code
+    push dword 6                ; Exception number
+    jmp exception_common
+
+
+exception_common:
     pushad
 
     push ds
@@ -39,20 +52,27 @@ interrupt_handler_0:
     push fs
     push gs
 
-    ; ensure kernel data segments are loaded if necessary
-
     cld
 
-    ; call C
+    ; Address	    Contents
+    ; [esp]	        Exception number
+    ; [esp + 4]	    Error code (dummy zero)
+    ; [esp + 8]	    Saved EIP
+    ; [esp + 12]	Saved CS
+    ; [esp + 16]	Saved EFLAGS
 
-    call exception_handler_0
+    mov ebx, esp
+    mov eax, [esp + 48]
 
-    ; restore registers
+    ; align the stack for C
 
-    pop gs
-    pop fs
-    pop es
-    pop ds
+    mov ebx, esp
+    and esp, 0xFFFFFFF0     ; align stack to 16 bytes
 
-    popad
-    iretd
+    ; push args
+
+    sub esp, 16
+    mov [esp], eax
+    call exception_handler
+
+    hlt

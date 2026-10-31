@@ -4,14 +4,7 @@
 #include "interrupts.h"
 #include "pic.h"
 
-void kmain(void)
-{
-    setGDT();
-    tui_init();
-
-    pic_remap();
-    idt_init();
-
+void test_div0(void) {
     tui_write("Testing division-by-zero exception...\n");
 
     __asm__ volatile (
@@ -23,10 +16,20 @@ void kmain(void)
         :
         : "eax", "ecx", "edx", "cc"
     );
-
+ 
     tui_write("This should never print!\n");
+}
 
-    // Only after the interrupt handlers are verified:
+void kmain(void)
+{
+    setGDT();
+    tui_init();
+
+    pic_remap();
+    idt_init();
+
+    test_div0();
+
     pic_unmask_irq(1);
     __asm__ volatile("sti");
 

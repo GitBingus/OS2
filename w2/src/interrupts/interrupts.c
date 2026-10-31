@@ -51,9 +51,15 @@ void idt_init(void) {
     idt_load(&idtr);
 }
 
-void exception_handler_0(void)
+void exception_handler(u32int exception_number)
 {
-    tui_write("CPU EXCEPTION: DIVISION ERROR\n");
+    tui_write("CPU EXCEPTION: ");
+
+    char buffer[12];                            // buffer is 12 bytes because the largest unsigned 32-bit integer has 10 decimal digits, plus the null terminator
+    uint_to_string(exception_number, buffer);
+    tui_write(buffer);
+
+    tui_write("\n");
 
     for (;;) {
         __asm__ volatile("cli; hlt");
