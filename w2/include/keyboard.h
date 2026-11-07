@@ -5,6 +5,7 @@
 #define KBD_STATUS_PORT     0x64
 
 #include "kbool.h"
+#include "types.h"
 
 /* Keyboard only supports US style QWERTY -- May add UK style, Devorak, Colemak etc in future */
 
@@ -35,6 +36,8 @@ keyboard_event_t keyboard_process_scancode(unsigned char scan_code);
 
 // Polls the keyboard and returns an event, if one is available
 keyboard_event_t keyboard_poll(void);
+
+u32int keyboard_get_scancode_log(u8int *buffer, u32int max_count);
 
 // Constantly monitors kb
 void monitor_kb(void);

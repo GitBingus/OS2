@@ -23,3 +23,12 @@ void uint_to_string(unsigned int value, char *buffer)
 
     buffer[output] = '\0';
 }
+
+void byte_to_hex(u8int value, char *buffer)
+{
+    const char hex[] = "0123456789ABCDEF";
+
+    buffer[0] = hex[(value >> 4) & 0x0F];
+    buffer[1] = hex[value & 0x0F];
+    buffer[2] = '\0';
+}

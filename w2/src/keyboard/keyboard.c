@@ -5,6 +5,10 @@
 #include "pic.h"
 
 #define KEYBOARD_BUFFER_SIZE 64
+#define SCANCODE_LOG_SIZE 128
+
+static volatile u8int scancode_log[SCANCODE_LOG_SIZE];
+static volatile u32int scancode_log_count = 0;
 
 // Persistent keyboard state
 static bool extended = false;
@@ -16,6 +20,13 @@ static keyboard_event_t keyboard_buffer[KEYBOARD_BUFFER_SIZE];  // stores up to 
 
 static volatile unsigned int buffer_head = 0;   // indicates where the next event will be inserted
 static volatile unsigned int buffer_tail = 0;   // indicates which event the main loop should read next
+
+volatile unsigned int keyboard_irq_count = 0;
+volatile unsigned int keyboard_event_count = 0;
+volatile unsigned int keyboard_dropped_count = 0;
+volatile u32int keyboard_scancodes_read = 0;
+volatile u32int keyboard_output_pending = 0;
+volatile u32int keyboard_dequeued_count = 0;
 
 static void keyboard_enqueue(keyboard_event_t event);
 
@@ -169,6 +180,45 @@ keyboard_event_t keyboard_process_scancode(unsigned char scan_code)
     return event;
 }
 
+u32int keyboard_get_scancode_log(u8int *buffer, u32int max_count) {
+    if (buffer == 0 || max_count == 0) {
+        return 0;
+    }
+
+    // Save the current interrupt flags, then disable interrupts.
+    u32int flags;
+
+    __asm__ volatile (
+        "pushfl\n\t"
+        "popl %0\n\t"
+        "cli"
+        : "=r"(flags)
+        :
+        : "memory", "cc"
+    );
+
+    u32int count = scancode_log_count;
+
+    if (count > max_count) {
+        count = max_count;
+    }
+
+    for (u32int i = 0; i < count; i++) {
+        buffer[i] = scancode_log[i];
+    }
+
+    // Restore the original interrupt flags.
+    __asm__ volatile (
+        "pushl %0\n\t"
+        "popfl"
+        :
+        : "r"(flags)
+        : "memory", "cc"
+    );
+
+    return count;
+}
+
 
 // Poll the controller and return any newly received keyboard event
 keyboard_event_t keyboard_poll(void)
@@ -177,17 +227,33 @@ keyboard_event_t keyboard_poll(void)
         return keyboard_no_event();
 
     unsigned char scan_code = read_scan_code();
+    keyboard_scancodes_read++;  // counts the number of scancodes read from the keyboard controller
 
     return keyboard_process_scancode(scan_code);
 }
 
 void keyboard_irq_handler(void) {
-    unsigned char scan_code = read_scan_code();
+    keyboard_irq_count++;
 
-    keyboard_event_t event = keyboard_process_scancode(scan_code);
+    for (unsigned int i = 0; i < 32; i++) {
+        if (!(inb(0x64) & 0x01)) {
+            break;
+        }
 
-    if (event.key != KEY_NONE) {
-        keyboard_enqueue(event);
+        unsigned char scan_code = read_scan_code();
+        keyboard_scancodes_read++;
+
+        // Record each raw scancode
+        if (scancode_log_count < SCANCODE_LOG_SIZE) {
+            scancode_log[scancode_log_count++] = scan_code;
+        }
+
+        keyboard_event_t event =
+            keyboard_process_scancode(scan_code);
+
+        if (event.key != KEY_NONE) {
+            keyboard_enqueue(event);
+        }
     }
 
     pic_acknowledge(1);
@@ -197,18 +263,27 @@ static void keyboard_enqueue(keyboard_event_t event) {
     unsigned int next = (buffer_head + 1) % KEYBOARD_BUFFER_SIZE;
 
     if (next == buffer_tail) {
+        keyboard_dropped_count++; // counts discarded events due to buffer overflow
         return;
     }
 
     keyboard_buffer[buffer_head] = event;
     buffer_head = next;
+
+    keyboard_event_count++; // counts successfully queued events
 }
 
-bool keyboard_dequeue(keyboard_event_t *event) {
-    if (buffer_head == buffer_tail) {return false;}
+bool keyboard_dequeue(keyboard_event_t *event)
+{
+    if (buffer_head == buffer_tail) {
+        return false;
+    }
 
     *event = keyboard_buffer[buffer_tail];
+
     buffer_tail = (buffer_tail + 1) % KEYBOARD_BUFFER_SIZE;
+
+    keyboard_dequeued_count++;
 
     return true;
 }
