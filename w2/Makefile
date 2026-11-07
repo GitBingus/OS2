@@ -21,6 +21,7 @@ KSTRING_DIR = $(DRIVER_DIR)
 PIC_DIR = $(SRC_DIR)/pic
 INTERRUPTS_DIR = $(SRC_DIR)/interrupts
 INPUT_DIR = $(SRC_DIR)/input
+SHELL_DIR = $(SRC_DIR)/shell
 
 
 # 3. Compiler Flags
@@ -44,6 +45,7 @@ INTERRUPTS_C_SRC = $(INTERRUPTS_DIR)/interrupts.c
 INTERRUPTS_ASM_SRC = $(INTERRUPTS_DIR)/interrupts.asm
 IDT_ASM_SRC = $(INTERRUPTS_DIR)/idt.asm
 INPUT_SRC = $(INPUT_DIR)/input.c
+SHELL_SRC = $(SHELL_DIR)/shell.c
 
 LINKER = $(SRC_DIR)/link.ld
 
@@ -62,10 +64,11 @@ INTERRUPTS_C_OBJ = $(INTERRUPTS_DIR)/interrupts.o
 INTERRUPTS_ASM_OBJ = $(INTERRUPTS_DIR)/interrupts_asm.o
 IDT_ASM_OBJ = $(INTERRUPTS_DIR)/idt_asm.o
 INPUT_OBJ = $(INPUT_DIR)/input.o
+SHELL_OBJ = $(SHELL_DIR)/shell.o
 
 
 C_OBJECTS = $(C_OBJ) $(IO_OBJ) $(TUI_OBJ) $(FB_OBJ) $(GDT_C_OBJ) $(KB_OBJ) $(KSTRING_OBJ) \
-            $(PIC_OBJ) $(INTERRUPTS_C_OBJ) $(INPUT_OBJ)
+            $(PIC_OBJ) $(INTERRUPTS_C_OBJ) $(INPUT_OBJ) $(SHELL_OBJ)
 OBJECTS = $(ASM_OBJ) $(GDT_ASM_OBJ) $(INTERRUPTS_ASM_OBJ) $(IDT_ASM_OBJ) $(C_OBJECTS)
 DEPS = $(C_OBJECTS:.o=.d)
 

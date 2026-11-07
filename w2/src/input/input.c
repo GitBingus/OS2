@@ -35,7 +35,7 @@ void readline(char *buffer, u32int size) {
         if (c == '\n') {
             break;
         }
-
+        
         if (index < size - 1) {
             if (c == '\b') {
                 if (index > 0) {
