@@ -3,6 +3,9 @@
 #include "tui.h"
 #include "interrupts.h"
 #include "pic.h"
+#include "input.h"
+
+char input[128];
 
 void test_div0(void) {
     tui_write("Testing division-by-zero exception...\n");
@@ -38,10 +41,9 @@ void kmain(void)
     tui_write("> ");
 
     while (1) {
-        keyboard_event_t event;
-
-        if (keyboard_dequeue(&event)) {
-            tui_handle_key(event);
-        }
+        readline(input, sizeof(input));
+        tui_write("\nYou entered: ");
+        tui_write(input);
+        tui_write("\n> ");
     }
 }

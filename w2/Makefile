@@ -151,8 +151,12 @@ run: $(ISO)
 
 .PHONY: run_testmode
 run_testmode:
-	qemu-system-i386 -cdrom os.iso -display curses -no-reboot -d int -D qemu-interrupts.log
-
+	qemu-system-i386 \
+    -cdrom os.iso \
+    -m 32 \
+    -boot d \
+	-display curses \
+	-audio none 
 
 # 14. Help
 .PHONY: help
