@@ -175,3 +175,13 @@ void tui_scroll(void)
 
     fb_move_cursor(tui_cursor);
 }
+
+void tui_clear(void) {
+    fb_clear(background);
+
+    // 2. Reset your TUI cursor position
+    tui_cursor = 0;
+
+    // 3. Move the hardware cursor to (0, 0)
+    fb_move_cursor(0);
+}

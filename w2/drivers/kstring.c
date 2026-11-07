@@ -32,3 +32,14 @@ void byte_to_hex(u8int value, char *buffer)
     buffer[1] = hex[value & 0x0F];
     buffer[2] = '\0';
 }
+
+int kstrcmp(cstring str1, cstring str2) {
+    while (*str1 && *str2) {
+        if (*str1 != *str2) {
+            return 1;   // If characters are different, return 1
+        }
+        str1++;
+        str2++;
+    }
+    return 0; // If both strings are equal, return 0
+}

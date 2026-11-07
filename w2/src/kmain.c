@@ -4,6 +4,7 @@
 #include "interrupts.h"
 #include "pic.h"
 #include "input.h"
+#include "shell.h"
 
 char input[128];
 u8int scancodes[128];
@@ -17,7 +18,7 @@ extern volatile u32int keyboard_output_pending;
 
 void test_div0(void) {
     tui_write("Testing division-by-zero exception...\n");
-
+    
     __asm__ volatile (
         "movl $10, %%eax\n\t"
         "xorl %%edx, %%edx\n\t"
@@ -27,73 +28,69 @@ void test_div0(void) {
         :
         : "eax", "ecx", "edx", "cc"
     );
- 
+    
     tui_write("This should never print!\n");
+}
+
+void test() {
+    tui_write("\nKeyboard IRQ count: ");
+    char irq_count_str[12];
+    uint_to_string(keyboard_irq_count, (irq_count_str));
+    tui_write(irq_count_str);
+    
+    tui_write("\nKeyboard event count: ");
+    char event_count_str[12];
+    uint_to_string(keyboard_event_count, (event_count_str));
+    tui_write(event_count_str);
+    
+    tui_write("\nKeyboard dropped count: ");
+    char dropped_count_str[12];
+    uint_to_string(keyboard_dropped_count, (dropped_count_str));
+    tui_write(dropped_count_str);
+    
+    tui_write("\nKeyboard scancodes read: ");
+    char scancodes_read_str[12];
+    uint_to_string(keyboard_scancodes_read, (scancodes_read_str));
+    tui_write(scancodes_read_str);
+    
+    tui_write("\nKeyboard output pending: ");
+    char output_pending_str[12];
+    uint_to_string(keyboard_output_pending, (output_pending_str));
+    tui_write(output_pending_str);
+    
+    u8int scancodes[128];
+    
+    u32int count = keyboard_get_scancode_log(scancodes, 128);
+    
+    tui_write("\nScancode log:\n");
+    
+    for (u32int i = 0; i < count; i++) {
+        char hex[3];
+        
+        byte_to_hex(scancodes[i], hex);
+        
+        tui_write(hex);
+        tui_putchar(' ');
+    }
+    
+    tui_newline();
 }
 
 void kmain(void)
 {
     setGDT();
     tui_init();
-
+    
     pic_remap();
     idt_init();
-
+    
     // test_div0();
-
+    
     pic_unmask_irq(1);
     __asm__ volatile("sti");
-
+    
     tui_write("Welcome to OS2!\n");
     tui_write("Keyboard initialised.\n\n");
-    tui_write("> ");
-
-    while (1) {
-        readline(input, sizeof(input));
-        tui_write("\nYou entered: ");
-        tui_write(input);
-        tui_write("\n> ");
-
-        tui_write("\nKeyboard IRQ count: ");
-        char irq_count_str[12];
-        uint_to_string(keyboard_irq_count, (irq_count_str));
-        tui_write(irq_count_str);
-
-        tui_write("\nKeyboard event count: ");
-        char event_count_str[12];
-        uint_to_string(keyboard_event_count, (event_count_str));
-        tui_write(event_count_str);
-
-        tui_write("\nKeyboard dropped count: ");
-        char dropped_count_str[12];
-        uint_to_string(keyboard_dropped_count, (dropped_count_str));
-        tui_write(dropped_count_str);
-
-        tui_write("\nKeyboard scancodes read: ");
-        char scancodes_read_str[12];
-        uint_to_string(keyboard_scancodes_read, (scancodes_read_str));
-        tui_write(scancodes_read_str);
-
-        tui_write("\nKeyboard output pending: ");
-        char output_pending_str[12];
-        uint_to_string(keyboard_output_pending, (output_pending_str));
-        tui_write(output_pending_str);
-
-        u8int scancodes[128];
-
-        u32int count = keyboard_get_scancode_log(scancodes, 128);
-
-        tui_write("\nScancode log:\n");
-
-        for (u32int i = 0; i < count; i++) {
-            char hex[3];
-
-            byte_to_hex(scancodes[i], hex);
-
-            tui_write(hex);
-            tui_putchar(' ');
-        }
-
-        tui_newline();
-    }
+    
+    shell_init();
 }

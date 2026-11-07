@@ -19,5 +19,6 @@ void tui_move_right(void);
 void tui_handle_key(keyboard_event_t event);
 
 void tui_scroll(void);
+void tui_clear(void);
 
 #endif // TUI_H
