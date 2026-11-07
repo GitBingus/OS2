@@ -3,6 +3,8 @@
 #include "kstring.h"
 #include "input.h"
 
+#define SHELL_BUFFER 128
+
 void shell_execute(const char *input) {
     if (kstrcmp(input, "help") == 0) {
         tui_write("Available commands:\n");
@@ -30,14 +32,14 @@ void shell_execute(const char *input) {
 }
 
 void shell_init(void) {
-    string buffer = "";
+    char buffer[SHELL_BUFFER];
     
     tui_write("Welcome to OS2!\n");
     tui_write("Keyboard initialised.\n\n");
 
     for (;;) {
         tui_write("> ");
-        readline(buffer, sizeof(buffer));
+        readline(buffer, SHELL_BUFFER);
 
         shell_execute(buffer);
     }

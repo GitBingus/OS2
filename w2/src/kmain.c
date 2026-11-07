@@ -89,8 +89,5 @@ void kmain(void)
     pic_unmask_irq(1);
     __asm__ volatile("sti");
     
-    tui_write("Welcome to OS2!\n");
-    tui_write("Keyboard initialised.\n\n");
-    
     shell_init();
 }
