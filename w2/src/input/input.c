@@ -35,7 +35,7 @@ void readline(char *buffer, u32int size) {
         if (c == '\n') {
             break;
         }
-        
+
         if (index < size - 1) {
             if (c == '\b') {
                 if (index > 0) {
@@ -47,7 +47,6 @@ void readline(char *buffer, u32int size) {
                 buffer[index++] = c;
                 tui_putchar(c); // Echo the character to the terminal
             }
-            c = getc();
         }
     }
     // make sure the buffer is null-terminated.
