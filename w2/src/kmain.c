@@ -16,21 +16,6 @@ extern volatile u32int keyboard_scancodes_read;
 extern volatile u32int keyboard_output_pending;
 
 
-void test_div0(void) {
-    tui_write("Testing division-by-zero exception...\n");
-    
-    __asm__ volatile (
-        "movl $10, %%eax\n\t"
-        "xorl %%edx, %%edx\n\t"
-        "xorl %%ecx, %%ecx\n\t"
-        "divl %%ecx"
-        :
-        :
-        : "eax", "ecx", "edx", "cc"
-    );
-    
-    tui_write("This should never print!\n");
-}
 
 void test() {
     tui_write("\nKeyboard IRQ count: ");

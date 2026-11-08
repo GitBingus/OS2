@@ -25,6 +25,11 @@ void shell_execute(const char *input) {
         keyboard_test();
     }
 
+    else if (kstrcmp(input, "divide by 0 test") == 0) {
+        tui_write("Testing division-by-zero exception...\n");
+        test_div0();
+    }
+
     else if (input[0] == '\0') {
         return;
     }
@@ -66,4 +71,20 @@ void keyboard_test(void) {
         tui_write(buffer);
         tui_write("\n");
     }
+}
+
+void test_div0(void) {
+    tui_write("Testing division-by-zero exception...\n");
+    
+    __asm__ volatile (
+        "movl $10, %%eax\n\t"
+        "xorl %%edx, %%edx\n\t"
+        "xorl %%ecx, %%ecx\n\t"
+        "divl %%ecx"
+        :
+        :
+        : "eax", "ecx", "edx", "cc"
+    );
+    
+    tui_write("This should never print!\n");
 }
