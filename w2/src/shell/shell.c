@@ -2,43 +2,39 @@
 #include "tui.h" 
 #include "kstring.h"
 #include "input.h"
+#include "types.h"
 
 #define SHELL_BUFFER 128
+#define COMMAND_COUNT (sizeof(commands) / sizeof(commands[0]))
 
-void shell_execute(const char *input) {
-    if (kstrcmp(input, "help") == 0) {
-        tui_write("Available commands:\n");
-        tui_write("help - Show this help message\n");
-        tui_write("clear - Clear the screen\n");
-        tui_write("exit - Exit the shell\n");
-    }
-    else if (kstrcmp(input, "clear") == 0) {
-        tui_clear();
-    }
+static void shell_help(void);
+static void shell_clear(void);
+static void shell_version(void);
 
-    else if (kstrcmp(input, "exit") == 0) {
-        tui_write("Exiting shell...\n");
-    }
+static const shell_command_t commands[] = {
+    {"help",    "Show available commands",  shell_help},
+    {"clear",   "Clear the screen",         shell_clear},
+    {"version", "Show OS2 version",         shell_version}
+};
 
-    else if (kstrcmp(input, "keytest") == 0) {
-        tui_write("Keyboard test started. Press keys to see their scancodes. Press ESC to exit.\n");
-        keyboard_test();
-    }
-
-    else if (kstrcmp(input, "divide by 0 test") == 0) {
-        tui_write("Testing division-by-zero exception...\n");
-        test_div0();
-    }
-
-    else if (input[0] == '\0') {
+void shell_execute(cstring input) {
+    if (input[0] == '\0')
         return;
+
+    u32int command_count = sizeof(commands) / sizeof(commands[0]);
+
+    for (u32int i = 0; i < command_count; i++)
+    {
+        if (kstrcmp(input, commands[i].name) == 0)
+        {
+            commands[i].handler();
+            return;
+        }
     }
 
-    else {
-        tui_write("Unknown command: ");
-        tui_write(input);
-        tui_write("\n");
-    }
+    tui_write("Unknown command: ");
+    tui_write(input);
+    tui_write("\n");
 }
 
 void shell_init(void) {
@@ -52,7 +48,31 @@ void shell_init(void) {
         readline(buffer, SHELL_BUFFER);
 
         shell_execute(buffer);
+        tui_write("\n");
     }
+}
+
+static void shell_help(void) {
+    tui_write("Available commands:\n");
+
+    u32int command_count = sizeof(commands) / sizeof(commands[0]);
+
+    for (u32int i = 0; i < command_count; i++)
+    {
+        tui_write("  ");
+        tui_write(commands[i].name);
+        tui_write(" - ");
+        tui_write(commands[i].description);
+        tui_write("\n");
+    }
+}
+
+static void shell_clear(void) {
+    tui_clear();
+}
+
+static void shell_version(void) {
+    tui_write(VERSION);
 }
 
 void keyboard_test(void) {
