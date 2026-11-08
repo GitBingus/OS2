@@ -20,6 +20,11 @@ void shell_execute(const char *input) {
         tui_write("Exiting shell...\n");
     }
 
+    else if (kstrcmp(input, "keytest") == 0) {
+        tui_write("Keyboard test started. Press keys to see their scancodes. Press ESC to exit.\n");
+        keyboard_test();
+    }
+
     else if (input[0] == '\0') {
         return;
     }
@@ -42,5 +47,23 @@ void shell_init(void) {
         readline(buffer, SHELL_BUFFER);
 
         shell_execute(buffer);
+    }
+}
+
+void keyboard_test(void) {
+    char buffer[SHELL_BUFFER];
+    tui_write("Press keys to see their scancodes. Press ESC to exit.\n");
+    
+    for (;;) {
+        readline(buffer, SHELL_BUFFER);
+        
+        if (kstrcmp(buffer, "ESC") == 0) {
+            tui_write("Exiting keyboard test...\n");
+            break;
+        }
+        
+        tui_write("Scancode: ");
+        tui_write(buffer);
+        tui_write("\n");
     }
 }

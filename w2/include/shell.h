@@ -4,4 +4,6 @@
 void shell_init(void);
 void shell_execute(const char *input);
 
+void keyboard_test(void);
+
 #endif

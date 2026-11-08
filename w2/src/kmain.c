@@ -76,8 +76,7 @@ void test() {
     tui_newline();
 }
 
-void kmain(void)
-{
+void kmain(void) {
     setGDT();
     tui_init();
     

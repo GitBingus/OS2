@@ -70,8 +70,7 @@ keyboard_event_t keyboard_process_scancode(unsigned char scan_code)
     }
 
     // Handle extended keys, including arrow keys
-    if (extended)
-    {
+    if (extended) {
         extended = false;
 
         // Ignore key releases
@@ -159,19 +158,23 @@ keyboard_event_t keyboard_process_scancode(unsigned char scan_code)
             break;
     }
 
-    // Convert a normal key press into ASCII
-    char character = scan_code_to_ascii(scan_code);
+    bool shift = left_shift_pressed || right_shift_pressed;
+    char character = keymap_normal[scan_code];
 
-    if (character == 0)
+    if (character == '\0')  // Ignore unrecognized scancodes
         return event;
 
-    bool shift_pressed = left_shift_pressed || right_shift_pressed;
+    // Handle letters separately from punctuation
+    if (character >= 'a' && character <= 'z') {
+        // caps Lock only affects letters
+        bool uppercase = shift ^ caps_lock;
 
-    // Apply Shift and Caps Lock to letters
-    if (character >= 'a' && character <= 'z')
-    {
-        if (shift_pressed != caps_lock)
-            character -= ('a' - 'A');
+        if (uppercase)
+            character = keymap_shift[scan_code];} else {
+
+        // for numbers and punctuation, only Shift matters
+        if (shift)
+            character = keymap_shift[scan_code];
     }
 
     event.key = KEY_CHARACTER;
