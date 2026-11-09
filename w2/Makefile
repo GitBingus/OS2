@@ -144,7 +144,7 @@ iso: $(ISO)
 .PHONY: run
 run: $(ISO)
 	$(QEMU) \
-		-monitor telnet:127.0.0.1:45454,server,nowait \
+		-monitor telnet:127.0.0.1:1212,server,nowait \
 		-serial null \
 		-boot d \
 		-cdrom $(ISO) \

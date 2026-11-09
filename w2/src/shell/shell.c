@@ -12,9 +12,11 @@ static void shell_clear(void);
 static void shell_version(void);
 
 static const shell_command_t commands[] = {
-    {"help",    "Show available commands",  shell_help},
-    {"clear",   "Clear the screen",         shell_clear},
-    {"version", "Show OS2 version",         shell_version}
+    {"help",    "Show available commands",          shell_help},
+    {"clear",   "Clear the screen",                 shell_clear},
+    {"version", "Show OS2 version",                 shell_version},
+    {"keytest", "Tests keyboard",                   keyboard_test},
+    {"div0",    "Tests division-by-zero exception", test_div0}
 };
 
 void shell_execute(cstring input) {
