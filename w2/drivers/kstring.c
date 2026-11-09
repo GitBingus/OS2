@@ -43,3 +43,34 @@ int kstrcmp(cstring str1, cstring str2) {
     }
     return 0; // If both strings are equal, return 0
 }
+
+int kstrsplit(string input, cstring argv[], int max_args) {
+    int argc = 0;
+    char *p = input;
+
+    while (*p != '\0' && argc < max_args)
+    {
+        // skip leading whitespace
+        while (*p == ' ' || *p == '\t')
+            p++;
+
+        if (*p == '\0')
+            break;
+
+        // start of an argument
+        argv[argc++] = p;
+
+        // find the end of the argument
+        while (*p != '\0' && *p != ' ' && *p != '\t')
+            p++;
+
+        // replace separator with string terminator
+        if (*p != '\0')
+        {
+            *p = '\0';
+            p++;
+        }
+    }
+
+    return argc;
+}

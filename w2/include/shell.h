@@ -5,7 +5,7 @@
 
 #include "kstring.h"
 
-typedef void (*shell_command_fn)(void);
+typedef void (*shell_command_fn)(int argc, cstring argv[]);
 
 typedef struct {
     cstring name;
@@ -14,9 +14,11 @@ typedef struct {
 } shell_command_t;
 
 void shell_init(void);
-void shell_execute(cstring input);
+void shell_execute(string input);
 
-void keyboard_test(void);
-void test_div0(void);
+void keyboard_test(int argc, cstring argv[]);
+void test_div0(int argc, cstring argv[]);
+
+int kstrsplit(string input, cstring argv[], int max_args);
 
 #endif
