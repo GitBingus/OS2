@@ -36,17 +36,15 @@ void readline(char *buffer, u32int size) {
             break;
         }
         
-        if (index < size - 1) {
-            if (c == '\b') {
-                if (index > 0) {
-                    index--;
-                    tui_backspace();
-                }
-            } // move back one position in the buffer and erase the character from the terminal
-            else {
-                buffer[index++] = c;
-                tui_putchar(c); // Echo the character to the terminal
+        if (c == '\b') {
+            if (index > 0) {
+                index--;
+                tui_backspace();
             }
+        }
+        else if (index < size - 1) {
+            buffer[index++] = c;
+            tui_putchar(c);
         }
     }
     // make sure the buffer is null-terminated.

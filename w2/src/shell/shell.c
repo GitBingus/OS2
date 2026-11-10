@@ -14,12 +14,12 @@ static void shell_version(int argc, cstring argv[]);
 static void shell_echo(int argc, cstring argv[]);
 
 static const shell_command_t commands[] = {
-    {"help",    "Show available commands",          shell_help},
-    {"clear",   "Clear the screen",                 shell_clear},
-    {"version", "Show OS2 version",                 shell_version},
-    {"keytest", "Tests keyboard",                   keyboard_test},
-    {"div0",    "Tests division-by-zero exception", test_div0},
-    {"echo",    "Prints arguments",                 shell_echo}
+    {"help",    "Show available commands, use with 'help `<command>`'",     shell_help},
+    {"clear",   "Clear the screen, use with 'clear'",                       shell_clear},
+    {"version", "Show OS2 version, use with 'version'",                     shell_version},
+    {"keytest", "Tests keyboard, use with 'keytest'",                       keyboard_test},
+    {"div0",    "Tests division-by-zero exception, use with 'div0'",        test_div0},
+    {"echo",    "Prints arguments, use with 'echo `options`'",              shell_echo}
 };
 
 void shell_execute(string input) {
@@ -28,6 +28,23 @@ void shell_execute(string input) {
     int argc = kstrsplit(input, argv, SHELL_MAX_ARGS);
 
     if (argc == 0) return;
+
+    // char buffer[12]; // Buffer to hold the string representation of the index
+
+    tui_write("Command: ");
+    for (int i = 0; i < argc; i++) {
+        // tui_write(argv[i]);
+        // tui_write(" ");
+        // tui_write("index: "); // Print the index of the argument
+        // uint_to_string(i, buffer);
+        // tui_write(buffer);
+        // tui_write(")");
+
+        if (i < argc - 1) {
+            tui_write(" ");
+        }
+    }
+    tui_write("\n");
 
     for (u32int i = 0; i < COMMAND_COUNT; i++) {
         if (kstrcmp(argv[0], commands[i].name) == 0)
@@ -57,15 +74,29 @@ void shell_init(void) {
 }
 
 static void shell_help(int argc, cstring argv[]) {
-    (void)argc;
-    (void)argv;
+    if (argc > 1) {
+        for (u32int i = 0; i < COMMAND_COUNT; i++) {
+
+            if (kstrcmp(argv[1], commands[i].name) == 0) {
+                tui_write(commands[i].name);
+                tui_write(" - ");
+                tui_write(commands[i].description);
+                tui_write("\n");
+                return;
+            }
+        }
+
+        tui_write("Unknown command: ");
+        tui_write(argv[1]);
+        tui_write("\n");
+        return;
+    }
 
     tui_write("Available commands:\n");
 
     u32int command_count = sizeof(commands) / sizeof(commands[0]);
 
-    for (u32int i = 0; i < command_count; i++)
-    {
+    for (u32int i = 0; i < command_count; i++) {
         tui_write("  ");
         tui_write(commands[i].name);
         tui_write(" - ");
@@ -128,13 +159,11 @@ void test_div0(int argc, cstring argv[]) {
     tui_write("This should never print!\n");
 }
 
-static void shell_echo(int argc, cstring argv[])
-{
+static void shell_echo(int argc, cstring argv[]) {
     bool newline = true;
     int start = 1;
 
-    if (argc > 1 && kstrcmp(argv[1], "-n") == 0)
-    {
+    if (argc > 1 && kstrcmp(argv[1], "-n") == 0) {
         newline = false;
         start = 2;
     }
