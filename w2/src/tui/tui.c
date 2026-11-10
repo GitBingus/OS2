@@ -185,3 +185,15 @@ void tui_clear(void) {
     // 3. Move the hardware cursor to (0, 0)
     fb_move_cursor(0);
 }
+
+u32int tui_get_cursor(void) {
+    return tui_cursor;
+}
+
+void tui_set_cursor(u32int position) {
+    if (position >= SCREEN_WIDTH * SCREEN_HEIGHT)
+        return;
+
+    tui_cursor = position;
+    fb_move_cursor(position);
+}

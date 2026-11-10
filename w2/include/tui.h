@@ -21,4 +21,7 @@ void tui_handle_key(keyboard_event_t event);
 void tui_scroll(void);
 void tui_clear(void);
 
+u32int tui_get_cursor(void);
+void tui_set_cursor(u32int position);
+
 #endif // TUI_H

@@ -2,36 +2,84 @@
 #include "keyboard.h"
 #include "tui.h"
 
-char getc(void) {
+int getc(void) {
     keyboard_event_t event;
-    
+
     for (;;) {
         if (keyboard_dequeue(&event)) {
-            if (event.key == KEY_CHARACTER) {
-                return event.character;
-                
-            } else if (event.key == KEY_ENTER) {
-                return '\n';
-                
-            } else if (event.key == KEY_BACKSPACE) {
-                // Handle backspace by returning a special character or
-                // implementing a backspace behavior in the calling function.
-                return '\b';
+            switch (event.key) {
+                case KEY_CHARACTER:
+                    return (unsigned char)event.character;
+
+                case KEY_ENTER:
+                    return '\n';
+
+                case KEY_BACKSPACE:
+                    return '\b';
+
+                case KEY_UP:
+                    return INPUT_KEY_UP;
+
+                case KEY_DOWN:
+                    return INPUT_KEY_DOWN;
+
+                case KEY_LEFT:
+                    return INPUT_KEY_LEFT;
+
+                case KEY_RIGHT:
+                    return INPUT_KEY_RIGHT;
+
+                default:
+                    break;
             }
         }
     }
 }
 
-void readline(char *buffer, u32int size) {
+keyboard_event_t getkey(void) {
+    keyboard_event_t event;
+
+    for (;;) {
+        if (keyboard_dequeue(&event)) {
+            return event;
+        }
+    }
+}
+
+input_action_t readline(char *buffer, u32int size) {
     if (buffer == 0 || size == 0) {
-        return;
+        return INPUT_NONE;
     }
     
+    u32int input_start = tui_get_cursor();
     u32int index = 0;
+    u32int cursor = 0;
     
     // Stop when Enter is pressed.
     for (;;) {
-        char c = getc();
+        int c = getc();
+
+        if (c == INPUT_KEY_LEFT) {
+            if (cursor > 0) {
+                cursor--;
+                tui_set_cursor(input_start + cursor);
+            }
+            continue;
+        }
+
+        if (c == INPUT_KEY_RIGHT) {
+            if (cursor < index) {
+                cursor++;
+                tui_set_cursor(input_start + cursor);
+            }
+            continue;
+        }
+
+        if (c == INPUT_KEY_UP || c == INPUT_KEY_DOWN) {
+            // Reserved for command history
+            continue;
+        }
+
         if (c == '\n') {
             break;
         }

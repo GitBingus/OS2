@@ -8,6 +8,12 @@
 #define SHELL_MAX_ARGS 16
 #define COMMAND_COUNT (sizeof(commands) / sizeof(commands[0]))
 
+#define SHELL_HISTORY_SIZE 16
+#define SHELL_BUFFER_SIZE 128
+
+static char history[SHELL_HISTORY_SIZE][SHELL_BUFFER_SIZE];
+static u32int history_count = 0;
+
 static void shell_help(int argc, cstring argv[]);
 static void shell_clear(int argc, cstring argv[]);
 static void shell_version(int argc, cstring argv[]);
@@ -67,9 +73,11 @@ void shell_init(void) {
 
     for (;;) {
         tui_write("> ");
-        readline(buffer, SHELL_BUFFER);
+        input_action_t action = readline(buffer, SHELL_BUFFER);
 
-        shell_execute(buffer);
+        if (action == INPUT_SUBMITTED) {
+            shell_execute(buffer);
+        }
     }
 }
 
