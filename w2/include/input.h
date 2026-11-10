@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "keyboard.h"
+#include "kstring.h"
 
 #define INPUT_KEY_UP    256
 #define INPUT_KEY_DOWN  257

@@ -91,11 +91,14 @@ input_action_t readline(char *buffer, u32int size) {
             }
         }
         else if (index < size - 1) {
-            buffer[index++] = c;
-            tui_putchar(c);
+            buffer[index++] = (char)c;
+            cursor = index;
+            tui_putchar((char)c);
         }
     }
     // make sure the buffer is null-terminated.
     buffer[index] = '\0';
     tui_newline();
+
+    return INPUT_SUBMITTED;
 }
