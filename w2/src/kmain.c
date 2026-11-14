@@ -16,7 +16,6 @@ extern volatile u32int keyboard_scancodes_read;
 extern volatile u32int keyboard_output_pending;
 
 
-
 void test() {
     tui_write("\nKeyboard IRQ count: ");
     char irq_count_str[12];

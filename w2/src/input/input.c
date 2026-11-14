@@ -75,13 +75,23 @@ input_action_t readline(char *buffer, u32int size) {
             continue;
         }
 
-        if (c == INPUT_KEY_UP || c == INPUT_KEY_DOWN) {
-            // Reserved for command history
-            continue;
+        if (c == INPUT_KEY_UP) {
+            return INPUT_HISTORY_PREVIOUS;
+        }
+
+        if (c == INPUT_KEY_DOWN) {
+            return INPUT_HISTORY_NEXT;
         }
 
         if (c == '\n') {
-            break;
+            buffer[index] = '\0';
+            tui_newline();
+            return INPUT_SUBMITTED;
+        }
+
+        if (c == INPUT_KEY_UP || c == INPUT_KEY_DOWN) {
+            // Reserved for command history
+            continue;
         }
         
         if (c == '\b') {

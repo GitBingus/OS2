@@ -10,6 +10,13 @@
 #define INPUT_KEY_LEFT  258
 #define INPUT_KEY_RIGHT 259
 
+typedef enum {
+    INPUT_NONE,              // No input action
+    INPUT_SUBMITTED,         // Enter pressed, input completed
+    INPUT_HISTORY_PREVIOUS,  // Up arrow pressed
+    INPUT_HISTORY_NEXT       // Down arrow pressed
+} input_action_t;
+
 int getc(void);
 input_action_t readline(char *buffer, u32int size); /* using a buffer size argument in readline() 
                                             is important because it prevents the function
@@ -23,12 +30,5 @@ input_action_t readline_history (
     cstring (*history_get)(u32int index),
     u32int history_count
 );
-
-typedef enum {
-    INPUT_NONE,
-    INPUT_SUBMITTED,
-    INPUT_HISTORY_PREVIOUS,
-    INPUT_HISTORY_NEXT
-} input_action_t;
 
 #endif
