@@ -11,8 +11,8 @@
 #define SHELL_HISTORY_SIZE 16
 #define SHELL_BUFFER_SIZE 128
 
-// static char history[SHELL_HISTORY_SIZE][SHELL_BUFFER_SIZE];
-// static u32int history_count = 0;
+static char history[SHELL_HISTORY_SIZE][SHELL_BUFFER_SIZE];
+static u32int history_count = 0;
 
 static void shell_help(int argc, cstring argv[]);
 static void shell_clear(int argc, cstring argv[]);
@@ -26,6 +26,18 @@ static const shell_command_t commands[] = {
     {"keytest", "Tests keyboard, use with 'keytest'",                       keyboard_test},
     {"div0",    "Tests division-by-zero exception, use with 'div0'",        test_div0},
     {"echo",    "Prints arguments, use with 'echo `options`'",              shell_echo}
+};
+
+void shell_history_add(cstring command) {
+    
+};
+
+cstring shell_history_get(u32int index) {
+
+};
+
+u32int shell_history_count(void) {
+
 };
 
 void shell_execute(string input) {

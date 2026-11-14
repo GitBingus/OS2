@@ -75,12 +75,8 @@ input_action_t readline(char *buffer, u32int size) {
             continue;
         }
 
-        if (c == INPUT_KEY_UP) {
-            return INPUT_HISTORY_PREVIOUS;
-        }
-
-        if (c == INPUT_KEY_DOWN) {
-            return INPUT_HISTORY_NEXT;
+        if (c == INPUT_KEY_UP || c == INPUT_KEY_DOWN) {
+            continue;
         }
 
         if (c == '\n') {
@@ -93,7 +89,7 @@ input_action_t readline(char *buffer, u32int size) {
             // Reserved for command history
             continue;
         }
-        
+
         if (c == '\b') {
             if (index > 0) {
                 index--;
