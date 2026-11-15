@@ -31,4 +31,18 @@ input_action_t readline_history (
     u32int history_count
 );
 
+static input_action_t readline_internal (
+    string buffer,
+    u32int size,
+    cstring (*history_get)(u32int),
+    u32int history_count
+);
+
+static input_action_t readline_internal(
+    string buffer,
+    u32int size,
+    cstring (*history_get)(u32int),
+    u32int history_count
+)
+
 #endif

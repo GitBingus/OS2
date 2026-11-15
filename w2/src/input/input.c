@@ -46,7 +46,26 @@ keyboard_event_t getkey(void) {
     }
 }
 
-input_action_t readline(char *buffer, u32int size) {
+input_action_t readline_history(
+    string buffer,
+    u32int size,
+    cstring (*history_get)(u32int),
+    u32int history_count
+)
+{
+    return readline_internal(buffer, size, history_get, history_count);
+}
+
+input_action_t readline(string buffer, u32int size) {
+    return readline_internal(buffer, size, 0, 0);
+}
+
+static input_action_t readline_internal(
+    string buffer,
+    u32int size,
+    cstring (*history_get)(u32int),
+    u32int history_count
+) {
     if (buffer == 0 || size == 0) {
         return INPUT_NONE;
     }
@@ -54,6 +73,8 @@ input_action_t readline(char *buffer, u32int size) {
     u32int input_start = tui_get_cursor();
     u32int index = 0;
     u32int cursor = 0;
+
+    u32int history_index = history_count;
     
     // Stop when Enter is pressed.
     for (;;) {
@@ -74,6 +95,48 @@ input_action_t readline(char *buffer, u32int size) {
             }
             continue;
         }
+
+        if (c == INPUT_KEY_UP)
+            {
+                if (history_index > 0)
+                {
+                    history_index--;
+
+                    cstring previous = history_get(history_index);
+
+                    if (previous != 0)
+                    {
+                        // Copy previous into buffer.
+                        // Update input length and cursor.
+                        // Redraw the input line.
+                    }
+                }
+
+                continue;
+            }
+
+        if (c == INPUT_KEY_DOWN)
+            {
+                if (history_index < history_count)
+                {
+                    history_index++;
+
+                    if (history_index == history_count)
+                    {
+                        // Restore a blank line or saved draft.
+                    }
+                    else
+                    {
+                        cstring next = history_get(history_index);
+
+                        // Copy next into buffer.
+                        // Update input length and cursor.
+                        // Redraw the input line.
+                    }
+                }
+
+                continue;
+            }
 
         if (c == INPUT_KEY_UP || c == INPUT_KEY_DOWN) {
             continue;

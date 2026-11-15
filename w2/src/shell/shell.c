@@ -29,16 +29,47 @@ static const shell_command_t commands[] = {
 };
 
 void shell_history_add(cstring command) {
-    
-};
+    if (command == 0 || command[0] == '\0')
+        return;
+
+    // If full, shift every command one position left.
+    if (history_count >= SHELL_HISTORY_SIZE)
+    {
+        for (u32int i = 1; i < SHELL_HISTORY_SIZE; i++)
+        {
+            for (u32int j = 0; j < SHELL_BUFFER_SIZE; j++)
+            {
+                history[i - 1][j] = history[i][j];
+            }
+        }
+
+        history_count--;
+    }
+
+    // Copy the new command into the next available slot.
+    u32int i = 0;
+
+    while (command[i] != '\0' && i < SHELL_BUFFER_SIZE - 1)
+    {
+        history[history_count][i] = command[i];
+        i++;
+    }
+
+    history[history_count][i] = '\0';
+
+    history_count++;
+}
 
 cstring shell_history_get(u32int index) {
+    if (index >= history_count)
+        return 0;
 
-};
+    return history[index];
+}
 
 u32int shell_history_count(void) {
-
-};
+    return history_count;
+}
 
 void shell_execute(string input) {
     cstring argv[SHELL_MAX_ARGS];
@@ -78,17 +109,28 @@ void shell_execute(string input) {
 }
 
 void shell_init(void) {
-    char buffer[SHELL_BUFFER];
-    
+    char buffer[SHELL_BUFFER_SIZE];
+
     tui_write("Welcome to OS2!\n");
-    tui_write("Keyboard initialised.\n\n");
 
-    for (;;) {
+    for (;;)
+    {
         tui_write("> ");
-        input_action_t action = readline(buffer, sizeof(buffer));
 
-        if (action == INPUT_SUBMITTED) {
-            shell_execute(buffer);
+        input_action_t action = readline_history (
+            buffer,
+            sizeof(buffer),
+            shell_history_get,
+            shell_history_count()
+        );
+
+        if (action == INPUT_SUBMITTED)
+        {
+            if (buffer[0] != '\0')
+            {
+                shell_history_add(buffer);
+                shell_execute(buffer);
+            }
         }
     }
 }
