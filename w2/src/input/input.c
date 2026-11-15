@@ -2,6 +2,22 @@
 #include "keyboard.h"
 #include "tui.h"
 
+input_action_t readline(string buffer, u32int size);
+
+input_action_t readline_history(
+    string buffer,
+    u32int size,
+    cstring (*history_get)(u32int index),
+    u32int history_count
+);
+
+static input_action_t readline_internal(
+    string buffer,
+    u32int size,
+    cstring (*history_get)(u32int),
+    u32int history_count
+);
+
 int getc(void) {
     keyboard_event_t event;
 
@@ -129,9 +145,7 @@ static input_action_t readline_internal(
                     {
                         cstring next = history_get(history_index);
 
-                        // Copy next into buffer.
-                        // Update input length and cursor.
-                        // Redraw the input line.
+                        (void)next; // TODO: Retrieve and display the next history entry
                     }
                 }
 
