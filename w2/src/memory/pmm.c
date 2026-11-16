@@ -14,6 +14,9 @@ static void pmm_clear_frame(u32int frame);
 static bool pmm_test_frame(u32int frame);
 static void pmm_mark_region_used(u64int base, u64int length);
 u32int pmm_get_free_frames(void);
+u32int pmm_alloc_frame(void);
+
+static bool pmm_initialized = false;
 
 extern char kernel_start;
 extern char kernel_end;
@@ -130,6 +133,17 @@ static void pmm_mark_region_free(u64int base, u64int length) {
     for (u64int i = first_frame; i < end_frame; i++) {
         pmm_clear_frame((u32int)i);
     }
+}
+
+u32int pmm_alloc_frame(void) {
+    if (!pmm_initialized) return 0;
+    for (u32int i = 0; i < PMM_MAX_FRAMES; i++) {
+        if (!pmm_test_frame(i)) {
+            pmm_set_frame(i);
+            return i * PMM_FRAME_SIZE;
+        }
+    }
+    return 0; // No free frames available
 }
 
 void pmm_init(multiboot_info_t *mb_info) {
@@ -271,4 +285,5 @@ void pmm_init(multiboot_info_t *mb_info) {
     // tui_write(test2BUF);
     // tui_newline();
     
+    pmm_initialized = true;
 }
