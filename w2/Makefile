@@ -1,9 +1,31 @@
-# 1. Toolchain
-NASM = nasm
-LD = ld
-CC = gcc
-GENISOIMAGE = genisoimage
-QEMU = qemu-system-i386
+
+# 1. Cross-platform toolchain configuration
+
+UNAME_S := $(shell uname -s)
+
+NASM := nasm
+QEMU := qemu-system-i386
+
+ifeq ($(UNAME_S),Darwin)
+    # macOS - Apple Silicon or Intel
+    CC := i686-elf-gcc
+    LD := i686-elf-ld
+    GENISOIMAGE := mkisofs
+    QEMU_DISPLAY := cocoa
+    QEMU_ACCEL := tcg
+
+else ifeq ($(UNAME_S),Linux)
+    # Linux, including Windows Subsystem for Linux
+    CC := gcc
+    LD := ld
+    GENISOIMAGE := genisoimage
+    QEMU_DISPLAY := curses
+    QEMU_ACCEL := tcg
+
+else
+    $(error Unsupported build environment: $(UNAME_S). Use macOS, Linux, or WSL on Windows)
+endif
+
 
 
 # 2. Directory Configuration
@@ -140,26 +162,32 @@ kernel: $(KERNEL)
 iso: $(ISO)
 
 
+
 # 13. Run in QEMU
-.PHONY: run
+
+.PHONY: run run_testmode
+
 run: $(ISO)
 	$(QEMU) \
-		-monitor telnet:127.0.0.1:1212,server,nowait \
+		-monitor telnet:127.0.0.1:45454,server,nowait \
 		-serial null \
 		-boot d \
 		-cdrom $(ISO) \
 		-m 32 \
-		-display curses
+		-accel $(QEMU_ACCEL) \
+		-display $(QEMU_DISPLAY)
 
+run_testmode: $(ISO)
+	$(QEMU) \
+		-boot d \
+		-cdrom $(ISO) \
+		-m 32 \
+		-no-reboot \
+		-accel $(QEMU_ACCEL) \
+		-display $(QEMU_DISPLAY) \
+		-d int \
+		-D qemu-interrupts.log
 
-.PHONY: run_testmode
-run_testmode:
-	qemu-system-i386 \
-    -cdrom os.iso \
-    -m 32 \
-    -boot d \
-	-display curses \
-	-audio none 
 
 # 14. Help
 .PHONY: help
