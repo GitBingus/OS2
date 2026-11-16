@@ -96,12 +96,25 @@ void input_replace_line (
     if (!buffer || size == 0 || !replacement || !length || !cursor) return;
 
     tui_set_cursor(input_start);
-    
-    for (unsigned int i = 0; i < size - 1; i++) {
-        buffer[i] = replacement[i];
+
+    for (u32int i = 0; i < *length; i++) {
+        tui_putchar(' ');
     }
 
-    cursor = length;
+    tui_set_cursor(input_start);
+    
+    u32int i = 0;
+
+    while (i < size - 1 && replacement[i] != '\0') {
+        buffer[i] = replacement[i];
+        i++;
+    }
+
+    buffer[i] = '\0';
+
+    *length = i;
+    *cursor = i;
+
     tui_set_cursor(input_start);
 
     tui_write(buffer);
