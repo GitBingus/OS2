@@ -17,7 +17,7 @@ static void pmm_mark_region_used(u64int base, u64int length);
 u32int pmm_get_free_frames(void);
 u32int pmm_alloc_frame(void);
 bool pmm_free_frame(u32int address);
-    
+
 static bool pmm_initialized = false;
 
 extern char kernel_start;
@@ -185,13 +185,13 @@ u32int pmm_alloc_frame(void) {
 }
 
 void pmm_init(multiboot_info_t *mb_info) {
+    pmm_initialized = false;
+
     if (mb_info == 0)
         return;
 
     if (!(mb_info->flags & MULTIBOOT_INFO_MEM_MAP))
         return;
-
-    pmm_initialized = false;
 
     for (u32int i = 0; i < sizeof(pmm_bitmap); i++) {
         pmm_bitmap[i] = 0xFF;
@@ -205,15 +205,18 @@ void pmm_init(multiboot_info_t *mb_info) {
 
         // 1. Ensure at least 4 bytes remain for the size field
         if (remaining < sizeof(u32int))
-            break;
+            return;
 
         // 2. Interpret the current address as a memory map entry
         multiboot_memory_map_t *entry =
             (multiboot_memory_map_t *)current;
 
         // 3. Validate the size of this entry
-        if (entry->size < 20) break;
-        if (entry->size > remaining - sizeof(u32int)) break;
+        if (remaining < sizeof(u32int))
+            return;
+
+        if (entry->size < 20)
+            return;
 
         if (entry->type == MULTIBOOT_MEMORY_AVAILABLE) {
             pmm_mark_region_free(entry->addr, entry->len);
