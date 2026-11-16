@@ -11,3 +11,4 @@ w2/TODO
 *.py
 requirements.txt
 *.log
+.DS_Store
