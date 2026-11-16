@@ -70,6 +70,8 @@ void kmain(u32int ebx) {
     setGDT();
     tui_init();
 
+    if (!mb_info) return;
+
     pmm_init(mb_info);
 
     /* 

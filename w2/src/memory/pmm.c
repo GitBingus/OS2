@@ -3,12 +3,85 @@
 #include "kstring.h"
 #include "tui.h"
 
+#define PMM_FRAME_SIZE 4096
+#define PMM_MAX_MEMORY (128 * 1024 * 1024)
+#define PMM_MAX_FRAMES (PMM_MAX_MEMORY / PMM_FRAME_SIZE)
+
+static u8int pmm_bitmap[PMM_MAX_FRAMES / 8];
+
+static void pmm_set_frame(u32int frame);
+static void pmm_clear_frame(u32int frame);
+static bool pmm_test_frame(u32int frame);
+
+static void pmm_set_frame(u32int frame) {
+    if (frame >= PMM_MAX_FRAMES)
+        return;
+
+    u32int byte_index = frame / 8;
+    u32int bit_index = frame % 8;
+
+    pmm_bitmap[byte_index] |= (u8int)(1u << bit_index); // It sets the selected bit to 1 without changing any other bits
+}
+
+static void pmm_clear_frame(u32int frame) {
+    if (frame >= PMM_MAX_FRAMES)
+        return;
+
+    u32int byte_index = frame / 8;
+    u32int bit_index = frame % 8;
+
+    pmm_bitmap[byte_index] &= (u8int)~(1u << bit_index); // This function clears a bit to 0
+}
+
+static bool pmm_test_frame(u32int frame) {
+    if (frame >= PMM_MAX_FRAMES)
+        return true; // Treat unsupported frames as unavailable.
+
+    u32int byte_index = frame / 8;
+    u32int bit_index = frame % 8;
+
+    return (pmm_bitmap[byte_index] & (1u << bit_index)) != 0;
+}
+
+void uint64_to_hex(u64int value, char *buffer) {
+    char hexChars[] = "0123456789ABCDEF";
+
+    buffer[0] = '0';
+    buffer[1] = 'x';
+    
+    for (int i = 15; i >= 0; i--) {
+        int nibble = value & 0xF;
+
+        buffer[i + 2] = hexChars[nibble];
+
+        value >>= 4;
+    }
+
+    buffer[18] = '\0';
+}
+
+static void pmm_mark_region_free(u64int base, u64int length) {
+    // TODO: Calculate the first fully contained frame.
+
+    // TODO: Calculate the end of the region.
+
+    // TODO: Limit the region to PMM_MAX_MEMORY.
+
+    // TODO: Loop through the frames.
+
+    // TODO: Call pmm_clear_frame() for each eligible frame.
+}
+
 void pmm_init(multiboot_info_t *mb_info) {
     if (mb_info == 0)
         return;
 
     if (!(mb_info->flags & MULTIBOOT_INFO_MEM_MAP))
         return;
+
+    for (u32int i = 0; i < sizeof(pmm_bitmap); i++) { // makes every frame unavailable initially
+        pmm_bitmap[i] = 0xFF;
+    }
 
     u32int current = mb_info->mmap_addr;
     u32int remaining = mb_info->mmap_length;
@@ -24,9 +97,6 @@ void pmm_init(multiboot_info_t *mb_info) {
             (multiboot_memory_map_t *)current;
 
         // 3. Validate the size of this entry
-        // TODO: Check entry->size is at least 20 bytes
-        // TODO: Check the complete entry fits within remaining
-
         if (entry->size < 20) break;
         if (entry->size > remaining - sizeof(u32int)) break;
 
@@ -59,7 +129,22 @@ void pmm_init(multiboot_info_t *mb_info) {
                 break;
         }
 
-        tui_write(status);
+        (void)(status);
+        tui_newline();
+
+        char addr_str[19];
+        char len_str[19];
+
+        uint64_to_hex(entry->addr, addr_str);
+        uint64_to_hex(entry->len, len_str);
+
+        tui_write("Base: ");
+        tui_write(addr_str);
+        tui_newline();
+
+        tui_write("Length: ");
+        tui_write(len_str);
+        tui_newline();
 
         // 5. Calculate the total size of this entry
         u32int entry_size = entry->size + sizeof(u32int);
@@ -68,4 +153,26 @@ void pmm_init(multiboot_info_t *mb_info) {
         current += entry_size;
         remaining -= entry_size;
     }
+    // pmm_set_frame(256);                         // Mark used.
+ 
+    // bool test1 = pmm_test_frame(256);
+    // char test1BUF[32];                          // Should return true
+
+    // uint_to_string((int)test1, test1BUF);
+
+    // pmm_clear_frame(256);                       // Mark free.
+
+    // bool test2 = pmm_test_frame(256);           // Should return false
+    // char test2BUF[32];
+ 
+    // uint_to_string((int)test2, test2BUF);
+
+    // tui_newline();
+    // 
+    // tui_write(test1BUF);
+    // tui_newline();
+    // 
+    // tui_write(test2BUF);
+    // tui_newline();
+    
 }
