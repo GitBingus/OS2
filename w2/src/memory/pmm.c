@@ -8,6 +8,7 @@
 #define PMM_MAX_FRAMES (PMM_MAX_MEMORY / PMM_FRAME_SIZE)
 
 static u8int pmm_bitmap[PMM_MAX_FRAMES / 8];
+static u8int pmm_allocated_bitmap[PMM_MAX_FRAMES / 8];
 
 static void pmm_set_frame(u32int frame);
 static void pmm_clear_frame(u32int frame);
@@ -15,11 +16,41 @@ static bool pmm_test_frame(u32int frame);
 static void pmm_mark_region_used(u64int base, u64int length);
 u32int pmm_get_free_frames(void);
 u32int pmm_alloc_frame(void);
-
+bool pmm_free_frame(u32int address);
+    
 static bool pmm_initialized = false;
 
 extern char kernel_start;
 extern char kernel_end;
+
+bool pmm_free_frame(u32int address) {
+    if (!pmm_initialized)
+        return false;
+
+    if (address % PMM_FRAME_SIZE != 0)
+        return false;
+
+    u32int frame = address / PMM_FRAME_SIZE;
+
+    if (frame >= PMM_MAX_FRAMES)
+        return false;
+
+    u32int byte_index = frame / 8;
+    u32int bit_index = frame % 8;
+    u8int mask = (u8int)(1u << bit_index);
+
+    // Only release frames allocated through pmm_alloc_frame()
+    if (!(pmm_allocated_bitmap[byte_index] & mask))
+        return false;
+
+    // Clear allocation ownership
+    pmm_allocated_bitmap[byte_index] &= (u8int)~mask;
+
+    // Mark the frame as free again
+    pmm_clear_frame(frame);
+
+    return true;
+}
 
 static void pmm_set_frame(u32int frame) {
     if (frame >= PMM_MAX_FRAMES)
@@ -140,6 +171,13 @@ u32int pmm_alloc_frame(void) {
     for (u32int i = 0; i < PMM_MAX_FRAMES; i++) {
         if (!pmm_test_frame(i)) {
             pmm_set_frame(i);
+
+            u32int byte_index = i / 8;
+            u32int bit_index = i % 8;
+
+            pmm_allocated_bitmap[byte_index] |=
+                (u8int)(1u << bit_index);
+
             return i * PMM_FRAME_SIZE;
         }
     }
@@ -154,10 +192,10 @@ void pmm_init(multiboot_info_t *mb_info) {
         return;
 
     pmm_initialized = false;
-    
-    // Initialize the page frame bitmap
-    for (u32int i = 0; i < sizeof(pmm_bitmap); i++) { // makes every frame unavailable initially
+
+    for (u32int i = 0; i < sizeof(pmm_bitmap); i++) {
         pmm_bitmap[i] = 0xFF;
+        pmm_allocated_bitmap[i] = 0;
     }
 
     u32int current = mb_info->mmap_addr;
