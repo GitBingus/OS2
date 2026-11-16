@@ -28,7 +28,65 @@ static const shell_command_t commands[] = {
     {"div0",    "Tests division-by-zero exception, use with 'div0'",        test_div0},
     {"echo",    "Prints arguments, use with 'echo `options`'",              shell_echo},
     {"meminfo", "Displays memory information, use with 'meminfo'",          shell_meminfo},
+    {"memtest", "Tests physical memory, use with 'memtest'",                shell_cmd_memtest},
 };
+
+static void shell_cmd_memtest(int argc, cstring argv[]) {
+    (void)argc;
+    (void)argv;
+
+    tui_write("\nOS2 Physical Memory Test\n");
+
+    u32int before = pmm_get_free_frames();
+
+    // Allocate two frames
+    u32int frame1 = pmm_alloc_frame();
+    u32int frame2 = pmm_alloc_frame();
+
+    bool passed = true;
+
+    // Check that allocations succeeded
+    if (frame1 == 0 || frame2 == 0) {
+        tui_write("[FAIL] Frame allocation\n");
+        passed = false;
+    } else {
+        tui_write("[PASS] Frame allocation\n");
+    }
+
+    // Check that frames are different
+    if (frame1 != 0 && frame2 != 0 && frame1 != frame2) {
+        tui_write("[PASS] Unique frame addresses\n");
+    } else {
+        tui_write("[FAIL] Unique frame addresses\n");
+        passed = false;
+    }
+
+    // Check 4 KiB alignment
+    if (frame1 != 0 && frame2 != 0 &&
+        frame1 % 4096 == 0 && frame2 % 4096 == 0) {
+        tui_write("[PASS] Frame alignment\n");
+    } else {
+        tui_write("[FAIL] Frame alignment\n");
+        passed = false;
+    }
+
+    // Verify bitmap changes
+    u32int after = pmm_get_free_frames();
+    u32int successful = (frame1 != 0) + (frame2 != 0);
+
+    if (before >= successful && after == before - successful) {
+        tui_write("[PASS] Bitmap allocation tracking\n");
+    } else {
+        tui_write("[FAIL] Bitmap allocation tracking\n");
+        passed = false;
+    }
+
+    if (passed) {
+        tui_write("\nAll memory tests passed!\n");
+    } else {
+        tui_write("\nMemory test failed!\n");
+    }
+}
 
 void shell_meminfo(int argc, cstring argv[]) {
     (void)argc;
