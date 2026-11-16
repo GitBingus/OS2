@@ -19,6 +19,7 @@ static void shell_help(int argc, cstring argv[]);
 static void shell_clear(int argc, cstring argv[]);
 static void shell_version(int argc, cstring argv[]);
 static void shell_echo(int argc, cstring argv[]);
+static void shell_cmd_memtest(int argc, cstring argv[]);
 
 static const shell_command_t commands[] = {
     {"help",    "Show available commands, use with 'help `<command>`'",     shell_help},
