@@ -1,6 +1,8 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#define USIZE u32int
+
 // unsigned
 
 typedef unsigned char  u8int;
