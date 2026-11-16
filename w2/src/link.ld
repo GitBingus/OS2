@@ -1,21 +1,34 @@
-ENTRY(loader) /* the name of the entry label */
+ENTRY(loader)
+
 SECTIONS {
-    . = 0x00100000; /* the code should be loaded at 1 MB */
-    .text ALIGN (0x1000) : /* align at 4 KB */
-    {
-    *(.text) /* all text sections from all files */
+    . = 0x00100000; /* Kernel starts at 1 MiB */
+
+    /* Mark the beginning of kernel memory */
+    kernel_start = .;
+
+    .text ALIGN(0x1000) : {
+        *(.text)
+        *(.text*)
     }
-    .rodata ALIGN (0x1000) : /* align at 4 KB */
-    {
-    *(.rodata*) /* all read-only data sections from all files */
+
+    .rodata ALIGN(0x1000) : {
+        *(.rodata*)
     }
-    .data ALIGN (0x1000) : /* align at 4 KB */
-    {
-    *(.data) /* all data sections from all files */
+
+    .data ALIGN(0x1000) : {
+        *(.data)
+        *(.data*)
     }
-    .bss ALIGN (0x1000) : /* align at 4 KB */
-    {
-    *(COMMON) /* all COMMON sections from all files */
-    *(.bss) /* all bss sections from all files */
+
+    .bss ALIGN(0x1000) : {
+        *(COMMON)
+        *(.bss)
+        *(.bss*)
     }
+
+    /* Align the end to a 4 KiB frame boundary */
+    . = ALIGN(0x1000);
+
+    /* Mark the end of kernel memory */
+    kernel_end = .;
 }

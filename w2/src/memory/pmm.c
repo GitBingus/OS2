@@ -12,6 +12,10 @@ static u8int pmm_bitmap[PMM_MAX_FRAMES / 8];
 static void pmm_set_frame(u32int frame);
 static void pmm_clear_frame(u32int frame);
 static bool pmm_test_frame(u32int frame);
+static void pmm_mark_region_used(u64int base, u64int length);
+
+extern char kernel_start;
+extern char kernel_end;
 
 static void pmm_set_frame(u32int frame) {
     if (frame >= PMM_MAX_FRAMES)
@@ -43,6 +47,33 @@ static bool pmm_test_frame(u32int frame) {
     return (pmm_bitmap[byte_index] & (1u << bit_index)) != 0;
 }
 
+static void pmm_mark_region_used(u64int base, u64int length) {
+    // Ignore empty or completely unsupported regions
+    if (length == 0 || base >= PMM_MAX_MEMORY)
+        return;
+
+    u64int end;
+
+    if (length > (u64int)-1 - base)
+        end = (u64int)-1;
+    else
+        end = base + length;
+
+    // Clip to our supported physical memory range
+    if (end > PMM_MAX_MEMORY)
+        end = PMM_MAX_MEMORY;
+
+    u64int first_frame = base / PMM_FRAME_SIZE;
+    u64int end_frame = end / PMM_FRAME_SIZE;
+
+    if (end % PMM_FRAME_SIZE != 0)
+        end_frame++;
+
+    for (u64int i = first_frame; i < end_frame; i++) {
+        pmm_set_frame((u32int)i);
+    }
+}
+
 void uint64_to_hex(u64int value, char *buffer) {
     char hexChars[] = "0123456789ABCDEF";
 
@@ -61,15 +92,31 @@ void uint64_to_hex(u64int value, char *buffer) {
 }
 
 static void pmm_mark_region_free(u64int base, u64int length) {
-    // TODO: Calculate the first fully contained frame.
+    // Ignore empty or completely unsupported regions
+    if (length == 0 || base >= PMM_MAX_MEMORY)
+        return;
 
-    // TODO: Calculate the end of the region.
+    u64int end;
 
-    // TODO: Limit the region to PMM_MAX_MEMORY.
+    if (length > (u64int)-1 - base)
+        end = (u64int)-1;
+    else
+        end = base + length;
 
-    // TODO: Loop through the frames.
+    // Clip to our supported physical memory range
+    if (end > PMM_MAX_MEMORY)
+        end = PMM_MAX_MEMORY;
 
-    // TODO: Call pmm_clear_frame() for each eligible frame.
+    u64int first_frame = base / PMM_FRAME_SIZE;
+
+    if (base % PMM_FRAME_SIZE != 0)
+        first_frame++;
+
+    u64int end_frame = end / PMM_FRAME_SIZE;
+
+    for (u64int i = first_frame; i < end_frame; i++) {
+        pmm_clear_frame((u32int)i);
+    }
 }
 
 void pmm_init(multiboot_info_t *mb_info) {
@@ -78,9 +125,47 @@ void pmm_init(multiboot_info_t *mb_info) {
 
     if (!(mb_info->flags & MULTIBOOT_INFO_MEM_MAP))
         return;
-
+    
+    // Initialize the page frame bitmap
     for (u32int i = 0; i < sizeof(pmm_bitmap); i++) { // makes every frame unavailable initially
         pmm_bitmap[i] = 0xFF;
+    }
+
+    for (u32int i = 0; i < sizeof(pmm_bitmap); i++) {
+        pmm_bitmap[i] = 0xFF;
+    }
+
+    u32int start = (u32int)&kernel_start;
+    u32int end = (u32int)&kernel_end;
+    
+    pmm_mark_region_used(start, end - start);
+
+    // Mark the memory regions as used based on the multiboot memory map
+    pmm_mark_region_used(mb_info->mmap_addr, mb_info->mmap_length);
+    pmm_mark_region_used(
+        (u32int)mb_info,
+        sizeof(multiboot_info_t)
+    );
+
+    // Reserve the first 1MB of memory
+    pmm_mark_region_used(0, 0x100000);
+
+    // Reserve low memory and any Multiboot data or modules
+    if (mb_info->flags & MULTIBOOT_INFO_MODS) {
+        multiboot_module_t *mods =
+            (multiboot_module_t *)mb_info->mods_addr;
+
+        pmm_mark_region_used(
+            mb_info->mods_addr,
+            mb_info->mods_count * sizeof(multiboot_module_t)
+        );
+
+        for (u32int i = 0; i < mb_info->mods_count; i++) {
+            pmm_mark_region_used(
+                mods[i].mod_start,
+                mods[i].mod_end - mods[i].mod_start
+            );
+        }
     }
 
     u32int current = mb_info->mmap_addr;
@@ -99,6 +184,10 @@ void pmm_init(multiboot_info_t *mb_info) {
         // 3. Validate the size of this entry
         if (entry->size < 20) break;
         if (entry->size > remaining - sizeof(u32int)) break;
+
+        if (entry->type == MULTIBOOT_MEMORY_AVAILABLE) {
+            pmm_mark_region_free(entry->addr, entry->len);
+        }
 
         cstring status = "";
 
