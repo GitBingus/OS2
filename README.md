@@ -1,8 +1,6 @@
 # OS2 — 32-bit x86 Operating System
 
-OS2 is a small, freestanding 32-bit x86 operating-system kernel written in **C and NASM**, booted with **GRUB** and tested in **QEMU**. The `w2/` project covers the work for Operating Systems Worksheet 2 Parts 1 and 2, and is being extended with an interactive command-line shell.
-
-> **Project status (16 November 2026):** The kernel boots, configures segmentation and interrupts, receives keyboard input through IRQ1, and runs an interactive shell. Command-line argument handling is implemented at a basic level. **Command history and full cursor-aware line editing are still in progress.** This status reflects features implemented and tested during development; review the submission checklist below against the current source and QEMU build.
+GD_OS is a small, freestanding 32-bit x86 operating-system kernel written in **C and NASM**, booted with **GRUB** and tested in **QEMU**. The `w2/` project covers the work for Operating Systems Worksheet 2 Parts 1 and 2, and is being extended with an interactive command-line shell.
 
 ## Features
 
@@ -80,6 +78,8 @@ cd w2
 make rebuild
 make run
 ```
+
+If VSCode throws an exception about the port selected is being used, try `make run_testmode`, where telnet will be made unavailable, but will let the program run
 
 The Makefile is the source of truth for available targets and QEMU options. If `make run` is not configured for your environment, build the ISO and launch it with your installed QEMU manually; for example:
 
