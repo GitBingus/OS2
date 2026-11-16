@@ -72,7 +72,7 @@ INPUT_SRC = $(INPUT_DIR)/input.c
 SHELL_SRC = $(SHELL_DIR)/shell.c
 TIMER_SRC = $(TIMER_DIR)/timer.c
 PMM_SRC = $(MEM_DIR)/pmm.c
-MLBT_SRC = $(MEM_DIR)/multiboot.c
+PAGER_SRC = $(MEM_DIR)/pager.c
 
 LINKER = $(SRC_DIR)/link.ld
 
@@ -94,12 +94,10 @@ INPUT_OBJ = $(INPUT_DIR)/input.o
 SHELL_OBJ = $(SHELL_DIR)/shell.o
 TIMER_OBJ = $(TIMER_DIR)/timer.o
 PMM_OBJ = $(MEM_DIR)/pmm.o
-MLBT_OBJ = $(MEM_DIR)/multiboot.o
-
+PAGER_OBJ = $(MEM_DIR)/pager.o
 
 C_OBJECTS = $(C_OBJ) $(IO_OBJ) $(TUI_OBJ) $(FB_OBJ) $(GDT_C_OBJ) $(KB_OBJ) $(KSTRING_OBJ) \
-            $(PIC_OBJ) $(INTERRUPTS_C_OBJ) $(INPUT_OBJ) $(SHELL_OBJ) $(TIMER_OBJ) $(PMM_OBJ) \
-			$(MLBT_OBJ)
+            $(PIC_OBJ) $(INTERRUPTS_C_OBJ) $(INPUT_OBJ) $(SHELL_OBJ) $(TIMER_OBJ) $(PMM_OBJ) $(PAGER_OBJ) \
 
 OBJECTS = $(ASM_OBJ) $(GDT_ASM_OBJ) $(INTERRUPTS_ASM_OBJ) $(IDT_ASM_OBJ) $(C_OBJECTS)
 DEPS = $(C_OBJECTS:.o=.d)
