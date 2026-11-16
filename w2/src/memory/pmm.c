@@ -152,6 +152,8 @@ void pmm_init(multiboot_info_t *mb_info) {
 
     if (!(mb_info->flags & MULTIBOOT_INFO_MEM_MAP))
         return;
+
+    pmm_initialized = false;
     
     // Initialize the page frame bitmap
     for (u32int i = 0; i < sizeof(pmm_bitmap); i++) { // makes every frame unavailable initially

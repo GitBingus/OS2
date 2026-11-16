@@ -72,21 +72,14 @@ void kmain(u32int ebx) {
 
     if (!mb_info) return;
 
-    pmm_init(mb_info);
-
-    /* 
-    This checks bit 6 of mb_info->flags
-    which tells you whether mmap_addr and mmap_length 
-    contain valid memory-map information
-    */
-
-    if (!(mb_info->flags & MULTIBOOT_INFO_MEM_MAP)) {
+        if (!(mb_info->flags & MULTIBOOT_INFO_MEM_MAP)) {
         tui_write("ERROR: Multiboot memory map unavailable.\n");
-
         for (;;) {
             __asm__ volatile("hlt");
         }
     }
+
+    pmm_init(mb_info);
     
     pic_remap();
     idt_init();
