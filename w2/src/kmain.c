@@ -5,6 +5,9 @@
 #include "pic.h"
 #include "input.h"
 #include "shell.h"
+#include "multiboot.h"
+#include "types.h"
+#include "pmm.h"
 
 char input[128];
 u8int scancodes[128];
@@ -60,9 +63,28 @@ void test() {
     tui_newline();
 }
 
-void kmain(void) {
+void kmain(u32int ebx) {
+    multiboot_info_t *mb_info =
+        (multiboot_info_t *)ebx;
+
     setGDT();
     tui_init();
+
+    pmm_init(mb_info);
+
+    /* 
+    This checks bit 6 of mb_info->flags
+    which tells you whether mmap_addr and mmap_length 
+    contain valid memory-map information
+    */
+
+    if (!(mb_info->flags & MULTIBOOT_INFO_MEM_MAP)) {
+        tui_write("ERROR: Multiboot memory map unavailable.\n");
+
+        for (;;) {
+            __asm__ volatile("hlt");
+        }
+    }
     
     pic_remap();
     idt_init();
