@@ -27,6 +27,30 @@ static void input_replace_line(
     u32int *cursor
 );
 
+static void input_redraw_line(
+    cstring buffer,
+    u32int input_start,
+    u32int previous_length,
+    u32int length,
+    u32int cursor
+) {
+    // Move to the beginning of the editable input
+    tui_set_cursor(input_start);
+
+    // Redraw the current text
+    for (u32int i = 0; i < length; i++) {
+        tui_putchar(buffer[i]);
+    }
+
+    // Erase any characters left over from the old text
+    for (u32int i = length; i < previous_length; i++) {
+        tui_putchar(' ');
+    }
+
+    // Restore the editing cursor
+    tui_set_cursor(input_start + cursor);
+}
+
 int getc(void) {
     keyboard_event_t event;
     
@@ -205,16 +229,52 @@ static input_action_t readline_internal(
             return INPUT_SUBMITTED;
         }
         
-        if (c == '\b') {
-            if (index > 0) {
+        else if (c == '\b') {
+            if (cursor > 0) {
+
+                u32int previous_length = index;
+
+                // Shift characters left, including the null terminator
+                for (u32int i = cursor - 1; i < index; i++) {
+                    buffer[i] = buffer[i + 1];
+                }
+
                 index--;
-                tui_backspace();
+                cursor--;
+
+                input_redraw_line(
+                    buffer,
+                    input_start,
+                    previous_length,
+                    index,
+                    cursor
+                );
             }
         }
-        else if (index < size - 1) {
-            buffer[index++] = (char)c;
-            cursor = index;
-            tui_putchar((char)c);
+        else if (c >= 32 && c <= 126 && index < size - 1) {
+            u32int previous_length = index;
+
+            // Shift characters right
+            for (u32int i = index; i > cursor; i--) {
+                buffer[i] = buffer[i - 1];
+            }
+
+            // Insert the character
+            buffer[cursor] = (char)c;
+
+            index++;
+            cursor++;
+
+            buffer[index] = '\0';
+
+            // Redraw the modified line
+            input_redraw_line(
+                buffer,
+                input_start,
+                previous_length,
+                index,
+                cursor
+            );
         }
     }
     // make sure the buffer is null-terminated.
