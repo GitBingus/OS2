@@ -13,6 +13,7 @@ static void pmm_set_frame(u32int frame);
 static void pmm_clear_frame(u32int frame);
 static bool pmm_test_frame(u32int frame);
 static void pmm_mark_region_used(u64int base, u64int length);
+u32int pmm_get_free_frames(void);
 
 extern char kernel_start;
 extern char kernel_end;
@@ -25,6 +26,18 @@ static void pmm_set_frame(u32int frame) {
     u32int bit_index = frame % 8;
 
     pmm_bitmap[byte_index] |= (u8int)(1u << bit_index); // It sets the selected bit to 1 without changing any other bits
+}
+
+u32int pmm_get_free_frames(void) {
+    u32int count = 0;
+
+    for (u32int i = 0; i < PMM_MAX_FRAMES; i++) {
+        if (!pmm_test_frame(i)) {
+            count++;
+        }
+    }
+
+    return count;
 }
 
 static void pmm_clear_frame(u32int frame) {
@@ -131,43 +144,6 @@ void pmm_init(multiboot_info_t *mb_info) {
         pmm_bitmap[i] = 0xFF;
     }
 
-    for (u32int i = 0; i < sizeof(pmm_bitmap); i++) {
-        pmm_bitmap[i] = 0xFF;
-    }
-
-    u32int start = (u32int)&kernel_start;
-    u32int end = (u32int)&kernel_end;
-    
-    pmm_mark_region_used(start, end - start);
-
-    // Mark the memory regions as used based on the multiboot memory map
-    pmm_mark_region_used(mb_info->mmap_addr, mb_info->mmap_length);
-    pmm_mark_region_used(
-        (u32int)mb_info,
-        sizeof(multiboot_info_t)
-    );
-
-    // Reserve the first 1MB of memory
-    pmm_mark_region_used(0, 0x100000);
-
-    // Reserve low memory and any Multiboot data or modules
-    if (mb_info->flags & MULTIBOOT_INFO_MODS) {
-        multiboot_module_t *mods =
-            (multiboot_module_t *)mb_info->mods_addr;
-
-        pmm_mark_region_used(
-            mb_info->mods_addr,
-            mb_info->mods_count * sizeof(multiboot_module_t)
-        );
-
-        for (u32int i = 0; i < mb_info->mods_count; i++) {
-            pmm_mark_region_used(
-                mods[i].mod_start,
-                mods[i].mod_end - mods[i].mod_start
-            );
-        }
-    }
-
     u32int current = mb_info->mmap_addr;
     u32int remaining = mb_info->mmap_length;
 
@@ -218,7 +194,8 @@ void pmm_init(multiboot_info_t *mb_info) {
                 break;
         }
 
-        (void)(status);
+        tui_write("Type: ");
+        tui_write(status);
         tui_newline();
 
         char addr_str[19];
@@ -241,6 +218,36 @@ void pmm_init(multiboot_info_t *mb_info) {
         // 6. Move to the next entry
         current += entry_size;
         remaining -= entry_size;
+    }
+
+    u32int start = (u32int)&kernel_start;
+    u32int end = (u32int)&kernel_end;
+    
+    pmm_mark_region_used(start, end - start);
+    // Mark the memory regions as used based on the multiboot memory map
+    pmm_mark_region_used(mb_info->mmap_addr, mb_info->mmap_length);
+    pmm_mark_region_used(
+        (u32int)mb_info,
+        sizeof(multiboot_info_t)
+    );
+    // Reserve the first 1MB of memory
+    pmm_mark_region_used(0, 0x100000);
+    // Reserve low memory and any Multiboot data or modules
+    if (mb_info->flags & MULTIBOOT_INFO_MODS) {
+        multiboot_module_t *mods =
+            (multiboot_module_t *)mb_info->mods_addr;
+        pmm_mark_region_used(
+            mb_info->mods_addr,
+            mb_info->mods_count * sizeof(multiboot_module_t)
+        );
+        for (u32int i = 0; i < mb_info->mods_count; i++) {
+            if (mods[i].mod_end > mods[i].mod_start) {
+                pmm_mark_region_used(
+                    mods[i].mod_start,
+                    mods[i].mod_end - mods[i].mod_start
+                );
+            }
+        }
     }
     // pmm_set_frame(256);                         // Mark used.
  

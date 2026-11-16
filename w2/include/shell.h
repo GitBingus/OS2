@@ -25,5 +25,7 @@ void shell_history_add(cstring command);
 cstring shell_history_get(u32int index);
 u32int shell_history_count(void);
 
+void shell_meminfo(int argc, cstring argv[]);
+
 
 #endif

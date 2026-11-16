@@ -3,6 +3,7 @@
 #include "kstring.h"
 #include "input.h"
 #include "types.h"
+#include "pmm.h"
 
 #define SHELL_BUFFER 128
 #define SHELL_MAX_ARGS 16
@@ -25,8 +26,37 @@ static const shell_command_t commands[] = {
     {"version", "Show OS2 version, use with 'version'",                     shell_version},
     {"keytest", "Tests keyboard, use with 'keytest'",                       keyboard_test},
     {"div0",    "Tests division-by-zero exception, use with 'div0'",        test_div0},
-    {"echo",    "Prints arguments, use with 'echo `options`'",              shell_echo}
+    {"echo",    "Prints arguments, use with 'echo `options`'",              shell_echo},
+    {"meminfo", "Displays memory information, use with 'meminfo'",          shell_meminfo},
 };
+
+void shell_meminfo(int argc, cstring argv[]) {
+    (void)argc;
+    (void)argv;
+
+    u32int free_frames = pmm_get_free_frames();
+    u32int total_memory = 128 * 1024 * 1024; // 128 MB
+    u32int used_memory = total_memory - (free_frames * 4096); // Each frame is 4 KB
+
+    char buffer[64];
+
+    tui_write("Memory Information:\n");
+    
+    uint_to_string(total_memory / (1024 * 1024), buffer);
+    tui_write("Total Memory Capacity: ");
+    tui_write(buffer);
+    tui_write(" MB\n");
+
+    uint_to_string(used_memory / (1024 * 1024), buffer);
+    tui_write("Unavailable / Unallocated Memory: ");
+    tui_write(buffer);
+    tui_write(" MB\n");
+
+    uint_to_string(free_frames * 4096 / (1024 * 1024), buffer);
+    tui_write("Free Memory: ");
+    tui_write(buffer);
+    tui_write(" MB\n");
+}
 
 void shell_history_add(cstring command) {
     if (command == 0 || command[0] == '\0')
