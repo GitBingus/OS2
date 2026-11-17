@@ -6,6 +6,7 @@
 #include "pmm.h"
 #include "paging.h"
 #include "power.h"
+#include "pit.h"
 
 #define SHELL_BUFFER 128
 #define SHELL_MAX_ARGS 16
@@ -23,7 +24,7 @@ static void shell_version(int argc, cstring argv[]);
 static void shell_echo(int argc, cstring argv[]);
 static void shell_cmd_memtest(int argc, cstring argv[]);
 static void shell_cmd_pagetest(int argc, cstring argv[]);
-static void shell_cmd_pittest(int argc, cstring argv[]);
+static void ticks(int argc, cstring argv[]);
 static void shell_cmd_shutdown(int argc, cstring argv[]);
 
 static const shell_command_t commands[] = {
@@ -36,9 +37,30 @@ static const shell_command_t commands[] = {
     {"meminfo", "Displays memory information, use with 'meminfo'",          shell_meminfo},
     {"memtest", "Tests physical memory, use with 'memtest'",                shell_cmd_memtest},
     {"pagetest", "Tests virtual memory mapping, use with 'pagetest'",       shell_cmd_pagetest},
-    {"pittest", "Tests the PIT timer, use with 'pittest'",                  shell_cmd_pittest},
+    {"pittest", "Tests the PIT timer, use with 'pittest'",                  ticks},
     {"shutdown", "Shuts down the system, use with 'shutdown'",              shell_cmd_shutdown},
 };
+
+static void ticks(int argc, cstring argv[]) {
+    (void)argc;
+    (void)argv;
+
+    u32int ticks = pit_get_ticks();
+    u32int uptime_ms = pit_get_uptime_ms();
+
+    char buffer[64];
+
+    uint_to_string(ticks, buffer);
+    tui_write("PIT Ticks: ");
+    tui_write(buffer);
+    tui_write("\n");
+
+    uint_to_string(uptime_ms, buffer);
+    tui_write("System Uptime: ");
+    tui_write(buffer);
+    tui_write(" ms\n");
+}
+
 static void shell_cmd_shutdown(int argc, cstring argv[]) {
     (void)argv;
 

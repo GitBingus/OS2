@@ -39,6 +39,32 @@ extern exception_handler
 ;       30	        0x1E	Security Exception (#SX)	            Yes
 ;       31	        0x1F	Reserved	                            —
 
+interrupt_handler_32:
+    pushad                      ; saves all GP registers
+
+    push ds
+    push es
+    push fs
+    push gs
+
+    cld                         ; clears direction flag before calling C
+
+    mov ebx, esp                ; Saves original stack pointer in ebx.
+    and esp, 0xFFFFFFF0         ; Rounds ESP down to the nearest 16-byte boundary.
+
+    call pit_handler            ; executes C PIT handler
+
+    mov esp, ebx                ; restores the original stack pointer
+
+    pop gs
+    pop fs
+    pop es
+    pop ds
+
+    popad                       ; restores registers
+
+    iretd                       ; returns to interrupted code
+
 interrupt_handler_33:
     pushad                      ; saves all GP registers
 

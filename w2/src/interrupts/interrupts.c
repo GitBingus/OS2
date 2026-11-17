@@ -84,6 +84,14 @@ void idt_init(void)
         );
     }
 
+    // Register the PIT IRQ0 (vector 32)
+    idt_set_gate(
+        32,
+        (u32int)interrupt_handler_32,
+        0x08,
+        0x8E
+    );
+
     // Register keyboard IRQ1 (vector 33)
     idt_set_gate(
         33,

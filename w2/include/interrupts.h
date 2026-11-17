@@ -36,7 +36,7 @@ extern void interrupt_handler_28(void);
 extern void interrupt_handler_29(void);
 extern void interrupt_handler_30(void);
 extern void interrupt_handler_31(void);
-
+extern void interrupt_handler_32(void);
 extern void interrupt_handler_33(void);
 
 void exception_handler(u32int exception_number);

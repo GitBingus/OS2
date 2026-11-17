@@ -74,8 +74,8 @@ void kmain(u32int ebx) {
 
     tui_write("[OK] Paging enabled\n");
 
-    // Enable keyboard interrupts
-    pic_unmask_irq(1);
+    pic_unmask_irq(0); // enable PIT
+    pic_unmask_irq(1); // enabled keyboard
 
     __asm__ volatile("sti");
 
