@@ -16,16 +16,18 @@ Port	Purpose
 static volatile u32int pit_ticks = 0;
 static u32int pit_frequency = 0;
 
-inline void pit_handler(void){
+void pit_handler(void){
     pit_ticks++;
+
+    pic_acknowledge(0);
 }
 
-inline u32int pit_get_ticks(void){
+u32int pit_get_ticks(void){
     return pit_ticks;
 }
 
 
-inline u32int pit_get_uptime_ms(void)
+u32int pit_get_uptime_ms(void)
 {
     if (pit_frequency == 0)
         return 0;

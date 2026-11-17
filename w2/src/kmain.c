@@ -7,6 +7,7 @@
 #include "shell.h"
 #include "pmm.h"
 #include "paging.h"
+#include "pit.h"
 
 /*
     Kernel panic: display an error and halt.
@@ -74,12 +75,14 @@ void kmain(u32int ebx) {
 
     tui_write("[OK] Paging enabled\n");
 
+    pit_init(PIT_DEFAULT_FREQUENCY);
+
     pic_unmask_irq(0); // enable PIT
     pic_unmask_irq(1); // enabled keyboard
 
     __asm__ volatile("sti");
 
-    tui_write("[OK] Keyboard interrupts enabled\n");
+    tui_write("[OK] PIT and keyboard interrupts enabled\n");
 
     shell_init();
 

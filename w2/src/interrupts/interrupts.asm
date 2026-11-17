@@ -1,7 +1,9 @@
 global interrupt_handler_0
 global interrupt_handler_6
 global interrupt_handler_33
+global interrupt_handler_32
 
+extern pit_handler
 extern keyboard_irq_handler
 extern exception_handler
 
