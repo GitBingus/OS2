@@ -9,11 +9,11 @@
 #include "paging.h"
 
 /*
- * Kernel panic: display an error and halt.
- *
- * Interrupts are disabled to prevent hardware IRQs
- * from continuing after a fatal error.
- */
+    Kernel panic: display an error and halt.
+    
+    Interrupts are disabled to prevent hardware IRQs
+    from continuing after a fatal error.
+*/
 
 static void kernel_panic(const char *message)
 {
