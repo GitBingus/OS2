@@ -40,25 +40,18 @@ static const shell_command_t commands[] = {
 
 static void shell_cmd_shutdown(int argc, cstring argv[]){
     if (argc > 1) {
-        tui_write("Usage: shutdown -- Shuts down the system using ACPI\n");
-        tui_write("Usage: shutdown -q (QEMU Shutdown) -- Shuts down the system 'QEMU style'\n");
+        tui_write("Usage: shutdown (QEMU Shutdown) -- Shuts down the system\n");
 
         return;
     }
 
-    if (argc == 2 && kstrcmp(argv[1], "-q") == 0) {
+    if (argc == 1) {
         tui_write("Shutting down OS2 (QEMU style)...\n");
         system_shutdown_qemu();
         return;
     }
 
-    if (argc == 2 && kstrcmp(argv[1], " ") == 0) {
-        tui_write("Shutting down OS2 (ACPI style)...\n");
-        system_shutdown();
-        return;
-    }
-
-    if (argc == 2 && kstrcmp(argv[1], "-q") != 0) {
+    if (argc == 2 && kstrcmp(argv[1], "-h") != 0) {
         tui_write("Unknown option: ");
         tui_write(argv[1]);
         tui_write("\n");
