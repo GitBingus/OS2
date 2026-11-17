@@ -12,4 +12,6 @@ void pit_handler(void);
 u32int pit_get_ticks(void);
 u32int pit_get_uptime_ms(void);
 
+void pit_sleep_ms(u32int milliseconds);
+
 #endif

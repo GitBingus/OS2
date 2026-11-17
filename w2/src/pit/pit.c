@@ -27,6 +27,36 @@ u32int pit_get_ticks(void){
 }
 
 
+void pit_sleep_ms(u32int milliseconds) {
+    if (milliseconds == 0 || pit_frequency == 0)
+        return;
+
+    // Convert milliseconds into PIT ticks, rounding up.
+    u32int delay_ticks =
+        (milliseconds / 1000) * pit_frequency +
+        ((milliseconds % 1000) * pit_frequency + 999) / 1000;
+
+    if (delay_ticks == 0)
+        return;
+
+    // Assumes interrupts were enabled when called.
+    u32int start_ticks = pit_get_ticks();
+
+    for (;;) {
+        __asm__ volatile("cli" ::: "memory");
+
+        if ((u32int)(pit_get_ticks() - start_ticks) >= delay_ticks) {
+            __asm__ volatile("sti" ::: "memory");
+            break;
+        }
+
+        // STI enables interrupts immediately before HLT.
+        // The next timer interrupt wakes the CPU.
+        __asm__ volatile("sti; hlt" ::: "memory");
+    }
+}
+
+
 u32int pit_get_uptime_ms(void)
 {
     if (pit_frequency == 0)

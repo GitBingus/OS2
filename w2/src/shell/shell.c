@@ -26,6 +26,7 @@ static void shell_cmd_memtest(int argc, cstring argv[]);
 static void shell_cmd_pagetest(int argc, cstring argv[]);
 static void ticks(int argc, cstring argv[]);
 static void shell_cmd_shutdown(int argc, cstring argv[]);
+static void sleep_test(int argc, cstring argv[]);
 
 static const shell_command_t commands[] = {
     {"help",    "Show available commands, use with 'help `<command>`'",     shell_help},
@@ -39,7 +40,64 @@ static const shell_command_t commands[] = {
     {"pagetest", "Tests virtual memory mapping, use with 'pagetest'",       shell_cmd_pagetest},
     {"pittest", "Tests the PIT timer, use with 'pittest'",                  ticks},
     {"shutdown", "Shuts down the system, use with 'shutdown'",              shell_cmd_shutdown},
+    {"sleep", "Tests the PIT sleep function, use with 'sleep <milliseconds>'", sleep_test},
 };
+
+
+static void sleep_test(int argc, cstring argv[]) {
+    if (argc != 2) {
+        tui_write("Usage: sleep <milliseconds>\n");
+        return;
+    }
+
+    if (argv[1][0] == '\0') {
+        tui_write("Error: Invalid duration.\n");
+        return;
+    }
+
+    // Convert the input string to an unsigned integer
+    u32int milliseconds = 0;
+
+    for (u32int i = 0; argv[1][i] != '\0'; i++) {
+        char c = argv[1][i];
+
+        if (c < '0' || c > '9') {
+            tui_write("Error: Invalid duration.\n");
+            return;
+        }
+
+        u32int digit = c - '0';
+
+        // Prevent integer overflow
+        if (milliseconds > (0xFFFFFFFFu - digit) / 10) {
+            tui_write("Error: Duration is too large.\n");
+            return;
+        }
+
+        milliseconds = milliseconds * 10 + digit;
+    }
+
+    char buffer[12];
+    uint_to_string(milliseconds, buffer);
+
+    tui_write("Sleeping for ");
+    tui_write(buffer);
+    tui_write(" milliseconds...\n");
+
+    // Measure actual elapsed time
+    u32int start = pit_get_uptime_ms();
+
+    pit_sleep_ms(milliseconds);
+
+    u32int elapsed = pit_get_uptime_ms() - start;
+
+    uint_to_string(elapsed, buffer);
+
+    tui_write("Woke up after ");
+    tui_write(buffer);
+    tui_write(" milliseconds.\n");
+}
+
 
 static void ticks(int argc, cstring argv[]) {
     (void)argc;
