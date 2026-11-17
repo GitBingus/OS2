@@ -1,97 +1,88 @@
+#include "types.h"
+#include "multiboot.h"
 #include "gdt.h"
-#include "keyboard.h"
-#include "tui.h"
 #include "interrupts.h"
 #include "pic.h"
-#include "input.h"
+#include "tui.h"
 #include "shell.h"
-#include "multiboot.h"
-#include "types.h"
 #include "pmm.h"
 #include "paging.h"
 
-char input[128];
-u8int scancodes[128];
+/*
+ * Kernel panic: display an error and halt.
+ *
+ * Interrupts are disabled to prevent hardware IRQs
+ * from continuing after a fatal error.
+ */
 
-extern volatile u32int keyboard_irq_count;
-extern volatile u32int keyboard_event_count;
-extern volatile u32int keyboard_dropped_count;
-extern volatile u32int keyboard_scancodes_read;
-extern volatile u32int keyboard_output_pending;
+static void kernel_panic(const char *message)
+{
+    __asm__ volatile("cli");
 
-
-void test() {
-    tui_write("\nKeyboard IRQ count: ");
-    char irq_count_str[12];
-    uint_to_string(keyboard_irq_count, (irq_count_str));
-    tui_write(irq_count_str);
-    
-    tui_write("\nKeyboard event count: ");
-    char event_count_str[12];
-    uint_to_string(keyboard_event_count, (event_count_str));
-    tui_write(event_count_str);
-    
-    tui_write("\nKeyboard dropped count: ");
-    char dropped_count_str[12];
-    uint_to_string(keyboard_dropped_count, (dropped_count_str));
-    tui_write(dropped_count_str);
-    
-    tui_write("\nKeyboard scancodes read: ");
-    char scancodes_read_str[12];
-    uint_to_string(keyboard_scancodes_read, (scancodes_read_str));
-    tui_write(scancodes_read_str);
-    
-    tui_write("\nKeyboard output pending: ");
-    char output_pending_str[12];
-    uint_to_string(keyboard_output_pending, (output_pending_str));
-    tui_write(output_pending_str);
-    
-    u8int scancodes[128];
-    
-    u32int count = keyboard_get_scancode_log(scancodes, 128);
-    
-    tui_write("\nScancode log:\n");
-    
-    for (u32int i = 0; i < count; i++) {
-        char hex[3];
-        
-        byte_to_hex(scancodes[i], hex);
-        
-        tui_write(hex);
-        tui_putchar(' ');
-    }
-    
+    tui_write("\nKERNEL PANIC: ");
+    tui_write(message);
     tui_newline();
+
+    for (;;) {
+        __asm__ volatile("hlt");
+    }
 }
 
+/*
+ * Main kernel entry point.
+ *
+ * EBX contains the physical address of the Multiboot
+ * information structure supplied by GRUB.
+ */
+
 void kmain(u32int ebx) {
+    __asm__ volatile("cli");
+
     multiboot_info_t *mb_info =
         (multiboot_info_t *)ebx;
 
+    // Initialise CPU segmentation
     setGDT();
+
+    // Initialise VGA terminal
     tui_init();
 
-    if (!mb_info) return;
+    tui_write("Starting OS2...\n");
 
-        if (!(mb_info->flags & MULTIBOOT_INFO_MEM_MAP)) {
-        tui_write("ERROR: Multiboot memory map unavailable.\n");
-        for (;;) {
-            __asm__ volatile("hlt");
-        }
+    // Validate Multiboot information
+    if (mb_info == 0) {
+        kernel_panic("Invalid Multiboot pointer");
     }
 
+    if (!(mb_info->flags & MULTIBOOT_INFO_MEM_MAP)) {
+        kernel_panic("Multiboot memory map unavailable");
+    }
+
+    // Initialise physical memory management
     pmm_init(mb_info);
-    
+
+    tui_write("[OK] Physical memory manager\n");
+
+    // Initialise interrupt infrastructure
     pic_remap();
     idt_init();
 
+    tui_write("[OK] Interrupt descriptor table\n");
+
+    // Initialise virtual memory and enable paging
     paging_init();
-    tui_write("Paging enabled successfully!\n");
-    
-    // test_div0();
-    
+
+    tui_write("[OK] Paging enabled\n");
+
+    // Enable keyboard interrupts
     pic_unmask_irq(1);
+
     __asm__ volatile("sti");
-    
+
+    tui_write("[OK] Keyboard interrupts enabled\n");
+
     shell_init();
+
+    // Shell should normally never return
+    kernel_panic("Shell unexpectedly returned");
 }

@@ -27,5 +27,4 @@ u32int shell_history_count(void);
 
 void shell_meminfo(int argc, cstring argv[]);
 
-
 #endif

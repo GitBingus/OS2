@@ -46,6 +46,7 @@ INPUT_DIR = $(SRC_DIR)/input
 SHELL_DIR = $(SRC_DIR)/shell
 TIMER_DIR = $(SRC_DIR)/timer
 MEM_DIR = $(SRC_DIR)/memory
+POWER_DIR = $(SRC_DIR)/power
 
 
 # 3. Compiler Flags
@@ -73,6 +74,7 @@ SHELL_SRC = $(SHELL_DIR)/shell.c
 TIMER_SRC = $(TIMER_DIR)/timer.c
 PMM_SRC = $(MEM_DIR)/pmm.c
 PAGING_SRC = $(MEM_DIR)/paging.c
+POWER_SRC = $(POWER_DIR)/power.c
 
 LINKER = $(SRC_DIR)/link.ld
 
@@ -95,9 +97,11 @@ SHELL_OBJ = $(SHELL_DIR)/shell.o
 TIMER_OBJ = $(TIMER_DIR)/timer.o
 PMM_OBJ = $(MEM_DIR)/pmm.o
 PAGING_OBJ = $(MEM_DIR)/paging.o
+POWER_OBJ = $(POWER_DIR)/power.o
 
 C_OBJECTS = $(C_OBJ) $(IO_OBJ) $(TUI_OBJ) $(FB_OBJ) $(GDT_C_OBJ) $(KB_OBJ) $(KSTRING_OBJ) \
             $(PIC_OBJ) $(INTERRUPTS_C_OBJ) $(INPUT_OBJ) $(SHELL_OBJ) $(TIMER_OBJ) $(PMM_OBJ) $(PAGING_OBJ) \
+			$(POWER_OBJ)
 
 OBJECTS = $(ASM_OBJ) $(GDT_ASM_OBJ) $(INTERRUPTS_ASM_OBJ) $(IDT_ASM_OBJ) $(C_OBJECTS)
 DEPS = $(C_OBJECTS:.o=.d)

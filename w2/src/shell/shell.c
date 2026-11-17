@@ -4,6 +4,8 @@
 #include "input.h"
 #include "types.h"
 #include "pmm.h"
+#include "paging.h"
+#include "power.h"
 
 #define SHELL_BUFFER 128
 #define SHELL_MAX_ARGS 16
@@ -20,6 +22,8 @@ static void shell_clear(int argc, cstring argv[]);
 static void shell_version(int argc, cstring argv[]);
 static void shell_echo(int argc, cstring argv[]);
 static void shell_cmd_memtest(int argc, cstring argv[]);
+static void shell_cmd_pagetest(int argc, cstring argv[]);
+static void shell_cmd_shutdown(int argc, cstring argv[]);
 
 static const shell_command_t commands[] = {
     {"help",    "Show available commands, use with 'help `<command>`'",     shell_help},
@@ -30,7 +34,96 @@ static const shell_command_t commands[] = {
     {"echo",    "Prints arguments, use with 'echo `options`'",              shell_echo},
     {"meminfo", "Displays memory information, use with 'meminfo'",          shell_meminfo},
     {"memtest", "Tests physical memory, use with 'memtest'",                shell_cmd_memtest},
+    {"pagetest", "Tests virtual memory mapping, use with 'pagetest'",       shell_cmd_pagetest},
+    {"shutdown", "Shuts down the system, use with 'shutdown'",              shell_cmd_shutdown},
 };
+
+static void shell_cmd_shutdown(int argc, cstring argv[]){
+    if (argc > 1) {
+        tui_write("Usage: shutdown -- Shuts down the system using ACPI\n");
+        tui_write("Usage: shutdown -q (QEMU Shutdown) -- Shuts down the system 'QEMU style'\n");
+
+        return;
+    }
+
+    if (argc == 2 && kstrcmp(argv[1], "-q") == 0) {
+        tui_write("Shutting down OS2 (QEMU style)...\n");
+        system_shutdown_qemu();
+        return;
+    }
+
+    if (argc == 2 && kstrcmp(argv[1], " ") == 0) {
+        tui_write("Shutting down OS2 (ACPI style)...\n");
+        system_shutdown();
+        return;
+    }
+
+    if (argc == 2 && kstrcmp(argv[1], "-q") != 0) {
+        tui_write("Unknown option: ");
+        tui_write(argv[1]);
+        tui_write("\n");
+        tui_write("Usage: shutdown -- Shuts down the system using ACPI\n");
+        tui_write("Usage: shutdown -q (QEMU Shutdown) -- Shuts down the system 'QEMU style'\n");
+
+        return;
+    }
+
+    system_shutdown_qemu();
+}
+
+static void shell_cmd_pagetest(int argc, cstring argv[]) {
+    (void)argc;
+    (void)argv;
+
+    tui_write("Testing virtual memory mapping...\n");
+
+    // Allocate a physical frame
+    u32int frame = pmm_alloc_frame();
+
+    if (frame == 0) {
+        tui_write("[FAIL] Physical frame allocation\n");
+        return;
+    }
+
+    // Map it at a virtual address outside the identity-mapped region
+    u32int virtual_addr = 0x08000000;
+
+    if (!paging_map(virtual_addr, frame, PAGE_WRITABLE)) {
+        tui_write("[FAIL] Virtual memory mapping\n");
+        pmm_free_frame(frame);
+        return;
+    }
+
+    tui_write("[PASS] Virtual memory mapping\n");
+
+    // Write and read through the virtual address
+    volatile u32int *ptr = (volatile u32int *)virtual_addr;
+
+    *ptr = 0x12345678;
+
+    if (*ptr == 0x12345678) {
+        tui_write("[PASS] Virtual memory read/write\n");
+    } else {
+        tui_write("[FAIL] Virtual memory read/write\n");
+    }
+
+    // Remove the mapping
+    if (paging_unmap(virtual_addr)) {
+        tui_write("[PASS] Virtual memory unmapping\n");
+    } else {
+        tui_write("[FAIL] Virtual memory unmapping\n");
+        return; // Don't free a frame that might still be mapped.
+    }
+
+    // Return the physical frame to the PMM
+    if (pmm_free_frame(frame)) {
+        tui_write("[PASS] Physical frame release\n");
+    } else {
+        tui_write("[FAIL] Physical frame release\n");
+    }
+
+    tui_write("Paging test complete.\n");
+}
 
 static void shell_cmd_memtest(int argc, cstring argv[]) {
     (void)argc;

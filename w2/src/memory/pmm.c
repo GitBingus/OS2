@@ -251,23 +251,25 @@ void pmm_init(multiboot_info_t *mb_info) {
                 break;
         }
 
-        tui_write("Type: ");
-        tui_write(status);
-        tui_newline();
+        (void)status; // Suppress unused variable warning
 
-        char addr_str[19];
-        char len_str[19];
+        // tui_write("Type: ");
+        // tui_write(status);
+        // tui_newline();
 
-        uint64_to_hex(entry->addr, addr_str);
-        uint64_to_hex(entry->len, len_str);
+        // char addr_str[19];
+        // char len_str[19];
+  
+        // uint64_to_hex(entry->addr, addr_str);
+        // uint64_to_hex(entry->len, len_str);
+ 
+        // tui_write("Base: ");
+        // tui_write(addr_str);
+        // tui_newline();
 
-        tui_write("Base: ");
-        tui_write(addr_str);
-        tui_newline();
-
-        tui_write("Length: ");
-        tui_write(len_str);
-        tui_newline();
+        // tui_write("Length: ");
+        // tui_write(len_str);
+        // tui_newline();
 
         // 5. Calculate the total size of this entry
         u32int entry_size = entry->size + sizeof(u32int);

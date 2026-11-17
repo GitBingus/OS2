@@ -38,6 +38,7 @@ void paging_init(void)
         : "memory"
     );
 
+    // Enable paging by setting the PG bit in CR0
     __asm__ volatile (
         "mov %%cr0, %%eax\n\t"
         "or $0x80000000, %%eax\n\t"
@@ -92,17 +93,22 @@ bool paging_map(
 }
 
 bool paging_unmap(u32int virtual_addr) {
-    u32int pd_index = (virtual_addr >> 22) & 0x3FF; // directory index
-    u32int pt_index = (virtual_addr >> 12) & 0x3FF; // table index
+    if (virtual_addr & 0xFFF)
+        return false;
 
-    // Check if the page table is present
-    if (!(page_directory[pd_index] & PAGE_PRESENT)) {
-        return false; // Page table not present
-    }
+    u32int pd_index = (virtual_addr >> 22) & 0x3FF;
+    u32int pt_index = (virtual_addr >> 12) & 0x3FF;
 
-    // Unmap the virtual address
-    u32int *page_table = (u32int *)(page_directory[pd_index] & ~0xFFF);
-    page_table[pt_index] = 0; // Clear the entry
+    if (!(page_directory[pd_index] & PAGE_PRESENT))
+        return false;
+
+    u32int *page_table =
+        (u32int *)(page_directory[pd_index] & 0xFFFFF000);
+
+    if (!(page_table[pt_index] & PAGE_PRESENT))
+        return false;
+
+    page_table[pt_index] = 0;
 
     __asm__ volatile (
         "invlpg (%0)"

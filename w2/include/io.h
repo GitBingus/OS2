@@ -9,5 +9,7 @@ unsigned char read_scan_code(void);
 char scan_code_to_ascii(unsigned char scan_code);
 
 u8int inb(u16int port);
+void outw(u16int port, u16int value);
+u16int inw(u16int port);
 
 #endif
