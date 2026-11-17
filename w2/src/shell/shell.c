@@ -44,22 +44,52 @@ static const shell_command_t commands[] = {
 };
 
 
-static void sleep_test(int argc, cstring argv[]) {
-    if (argc != 2) {
-        tui_write("Usage: sleep <milliseconds>\n");
+
+static void sleep_test(int argc, cstring argv[])
+{
+    if (argc != 2 && argc != 3) {
+        tui_write("Usage: sleep [-m|-s|-M|-h] <value>\n");
+        tui_write("  -m: milliseconds (default)\n");
+        tui_write("  -s: seconds\n");
+        tui_write("  -M: minutes\n");
+        tui_write("  -h: hours\n");
         return;
     }
 
-    if (argv[1][0] == '\0') {
-        tui_write("Error: Invalid duration.\n");
+    u32int multiplier = 1;
+    cstring duration_str;
+
+    // Determine time unit and duration argument.
+    if (argc == 3) {
+        duration_str = argv[2];
+
+        if (kstrcmp(argv[1], "-m") == 0) {
+            multiplier = 1;
+        } else if (kstrcmp(argv[1], "-s") == 0) {
+            multiplier = 1000;
+        } else if (kstrcmp(argv[1], "-M") == 0) {
+            multiplier = 60000;
+        } else if (kstrcmp(argv[1], "-h") == 0) {
+            multiplier = 3600000;
+        } else {
+            tui_write("Error: Invalid time unit.\n");
+            return;
+        }
+    } else {
+        // No flag: interpret duration as milliseconds.
+        duration_str = argv[1];
+    }
+
+    // Validate and parse duration.
+    if (duration_str[0] == '\0') {
+        tui_write("Error: Duration is empty.\n");
         return;
     }
 
-    // Convert the input string to an unsigned integer
-    u32int milliseconds = 0;
+    u32int value = 0;
 
-    for (u32int i = 0; argv[1][i] != '\0'; i++) {
-        char c = argv[1][i];
+    for (u32int i = 0; duration_str[i] != '\0'; i++) {
+        char c = duration_str[i];
 
         if (c < '0' || c > '9') {
             tui_write("Error: Invalid duration.\n");
@@ -68,23 +98,31 @@ static void sleep_test(int argc, cstring argv[]) {
 
         u32int digit = c - '0';
 
-        // Prevent integer overflow
-        if (milliseconds > (0xFFFFFFFFu - digit) / 10) {
+        // Prevent integer overflow during parsing.
+        if (value > (0xFFFFFFFFu - digit) / 10) {
             tui_write("Error: Duration is too large.\n");
             return;
         }
 
-        milliseconds = milliseconds * 10 + digit;
+        value = value * 10 + digit;
     }
 
-    char buffer[12];
-    uint_to_string(milliseconds, buffer);
+    // Prevent overflow when converting to milliseconds.
+    if (value > 0xFFFFFFFFu / multiplier) {
+        tui_write("Error: Duration is too large.\n");
+        return;
+    }
 
+    u32int milliseconds = value * multiplier;
+
+    char buffer[12];
+
+    uint_to_string(milliseconds, buffer);
     tui_write("Sleeping for ");
     tui_write(buffer);
     tui_write(" milliseconds...\n");
 
-    // Measure actual elapsed time
+    // Measure actual elapsed time.
     u32int start = pit_get_uptime_ms();
 
     pit_sleep_ms(milliseconds);
@@ -92,11 +130,11 @@ static void sleep_test(int argc, cstring argv[]) {
     u32int elapsed = pit_get_uptime_ms() - start;
 
     uint_to_string(elapsed, buffer);
-
     tui_write("Woke up after ");
     tui_write(buffer);
     tui_write(" milliseconds.\n");
 }
+
 
 
 static void ticks(int argc, cstring argv[]) {
