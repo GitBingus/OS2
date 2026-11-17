@@ -8,6 +8,7 @@
 #include "multiboot.h"
 #include "types.h"
 #include "pmm.h"
+#include "paging.h"
 
 char input[128];
 u8int scancodes[128];
@@ -83,6 +84,9 @@ void kmain(u32int ebx) {
     
     pic_remap();
     idt_init();
+
+    paging_init();
+    tui_write("Paging enabled successfully!\n");
     
     // test_div0();
     
