@@ -203,15 +203,15 @@ void pmm_init(multiboot_info_t *mb_info) {
 
     while (remaining > 0) {
 
-        // 1. Ensure at least 4 bytes remain for the size field
+        // Ensure at least 4 bytes remain for the size field
         if (remaining < sizeof(u32int))
             return;
 
-        // 2. Interpret the current address as a memory map entry
+        // Interpret the current address as a memory map entry
         multiboot_memory_map_t *entry =
             (multiboot_memory_map_t *)current;
 
-        // 3. Validate the size of this entry
+        // Validate the size of this entry
         if (remaining < sizeof(u32int))
             return;
 
@@ -224,7 +224,7 @@ void pmm_init(multiboot_info_t *mb_info) {
 
         cstring status = "";
 
-        // 4. Inspect the memory region
+        // Inspect the memory region
         switch (entry->type) {
             case MULTIBOOT_MEMORY_AVAILABLE:
                 status = ("Available");
@@ -271,10 +271,15 @@ void pmm_init(multiboot_info_t *mb_info) {
         // tui_write(len_str);
         // tui_newline();
 
-        // 5. Calculate the total size of this entry
+        // Ensure that the entry size does not exceed the remaining bytes
+        if (entry->size > remaining - sizeof(u32int)) {
+            return;
+        }
+
+        // Calculate the total size of this entry
         u32int entry_size = entry->size + sizeof(u32int);
 
-        // 6. Move to the next entry
+        // Move to the next entry
         current += entry_size;
         remaining -= entry_size;
     }

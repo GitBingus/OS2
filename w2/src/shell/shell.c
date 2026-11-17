@@ -23,6 +23,7 @@ static void shell_version(int argc, cstring argv[]);
 static void shell_echo(int argc, cstring argv[]);
 static void shell_cmd_memtest(int argc, cstring argv[]);
 static void shell_cmd_pagetest(int argc, cstring argv[]);
+static void shell_cmd_pittest(int argc, cstring argv[]);
 static void shell_cmd_shutdown(int argc, cstring argv[]);
 
 static const shell_command_t commands[] = {
@@ -35,32 +36,18 @@ static const shell_command_t commands[] = {
     {"meminfo", "Displays memory information, use with 'meminfo'",          shell_meminfo},
     {"memtest", "Tests physical memory, use with 'memtest'",                shell_cmd_memtest},
     {"pagetest", "Tests virtual memory mapping, use with 'pagetest'",       shell_cmd_pagetest},
+    {"pittest", "Tests the PIT timer, use with 'pittest'",                  shell_cmd_pittest},
     {"shutdown", "Shuts down the system, use with 'shutdown'",              shell_cmd_shutdown},
 };
+static void shell_cmd_shutdown(int argc, cstring argv[]) {
+    (void)argv;
 
-static void shell_cmd_shutdown(int argc, cstring argv[]){
-    if (argc > 1) {
-        tui_write("Usage: shutdown (QEMU Shutdown) -- Shuts down the system\n");
-
+    if (argc != 1) {
+        tui_write("Usage: shutdown\n");
         return;
     }
 
-    if (argc == 1) {
-        tui_write("Shutting down OS2 (QEMU style)...\n");
-        system_shutdown_qemu();
-        return;
-    }
-
-    if (argc == 2 && kstrcmp(argv[1], "-h") != 0) {
-        tui_write("Unknown option: ");
-        tui_write(argv[1]);
-        tui_write("\n");
-        tui_write("Usage: shutdown -- Shuts down the system using ACPI\n");
-        tui_write("Usage: shutdown -q (QEMU Shutdown) -- Shuts down the system 'QEMU style'\n");
-
-        return;
-    }
-
+    tui_write("Shutting down OS2...\n");
     system_shutdown_qemu();
 }
 
@@ -173,6 +160,14 @@ static void shell_cmd_memtest(int argc, cstring argv[]) {
     } else {
         tui_write("\nMemory test failed!\n");
     }
+
+    // cleanup
+
+    if (frame1 != 0)
+        pmm_free_frame(frame1);
+
+    if (frame2 != 0 && frame2 != frame1)
+        pmm_free_frame(frame2);
 }
 
 void shell_meminfo(int argc, cstring argv[]) {

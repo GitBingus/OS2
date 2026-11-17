@@ -48,6 +48,7 @@ TIMER_DIR = $(SRC_DIR)/timer
 MEM_DIR = $(SRC_DIR)/memory
 POWER_DIR = $(SRC_DIR)/power
 ACPI_DIR = $(SRC_DIR)/acpi
+PIT_DIR = $(SRC_DIR)/pit
 
 
 # 3. Compiler Flags
@@ -76,8 +77,9 @@ TIMER_SRC = $(TIMER_DIR)/timer.c
 PMM_SRC = $(MEM_DIR)/pmm.c
 PAGING_SRC = $(MEM_DIR)/paging.c
 POWER_SRC = $(POWER_DIR)/power.c
-ACPI_SRC = $(ACPI_DIR)/acpi.c
-TABLEDS_SRC = $(ACPI_DIR)/tables.c
+# ACPI_SRC = $(ACPI_DIR)/acpi.c
+# TABLEDS_SRC = $(ACPI_DIR)/tables.c
+PIT_SRC = $(PIT_DIR)/pit.c
 
 
 LINKER = $(SRC_DIR)/link.ld
@@ -102,12 +104,13 @@ TIMER_OBJ = $(TIMER_DIR)/timer.o
 PMM_OBJ = $(MEM_DIR)/pmm.o
 PAGING_OBJ = $(MEM_DIR)/paging.o
 POWER_OBJ = $(POWER_DIR)/power.o
-ACPI_OBJ = $(ACPI_DIR)/acpi.o
-TABLES_OBJ = $(ACPI_DIR)/tables.o
+# ACPI_OBJ = $(ACPI_DIR)/acpi.o
+# TABLES_OBJ = $(ACPI_DIR)/tables.o
+PIT_OBJ = $(PIT_DIR)/pit.o
 
 C_OBJECTS = $(C_OBJ) $(IO_OBJ) $(TUI_OBJ) $(FB_OBJ) $(GDT_C_OBJ) $(KB_OBJ) $(KSTRING_OBJ) \
             $(PIC_OBJ) $(INTERRUPTS_C_OBJ) $(INPUT_OBJ) $(SHELL_OBJ) $(TIMER_OBJ) $(PMM_OBJ) $(PAGING_OBJ) \
-			$(POWER_OBJ) $(ACPI_OBJ) $(TABLES_OBJ)
+			$(POWER_OBJ) $(PIT_OBJ) # $(ACPI_OBJ) $(TABLES_OBJ)
 
 OBJECTS = $(ASM_OBJ) $(GDT_ASM_OBJ) $(INTERRUPTS_ASM_OBJ) $(IDT_ASM_OBJ) $(C_OBJECTS)
 DEPS = $(C_OBJECTS:.o=.d)

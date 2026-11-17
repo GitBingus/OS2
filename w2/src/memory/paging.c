@@ -79,7 +79,9 @@ bool paging_map(
     }
 
     // Map the physical address to the virtual address
-    u32int *page_table = (u32int *)(page_directory[pd_index] & ~0xFFF);
+    u32int *page_table = (u32int *)(page_directory[pd_index] & ~0xFFF); // check for an existing mapping
+    if (page_table[pt_index] & PAGE_PRESENT) return false;
+
     page_table[pt_index] = (physical_addr & 0xFFFFF000) | flags | PAGE_PRESENT;
 
     __asm__ volatile (
