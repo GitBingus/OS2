@@ -29,24 +29,21 @@ static void shell_cmd_shutdown(int argc, cstring argv[]);
 static void sleep_test(int argc, cstring argv[]);
 
 static const shell_command_t commands[] = {
-    {"help",    "Show available commands, use with 'help `<command>`'",     shell_help},
-    {"clear",   "Clear the screen, use with 'clear'",                       shell_clear},
-    {"version", "Show OS2 version, use with 'version'",                     shell_version},
-    {"keytest", "Tests keyboard, use with 'keytest'",                       keyboard_test},
-    {"div0",    "Tests division-by-zero exception, use with 'div0'",        test_div0},
-    {"echo",    "Prints arguments, use with 'echo `options`'",              shell_echo},
-    {"meminfo", "Displays memory information, use with 'meminfo'",          shell_meminfo},
-    {"memtest", "Tests physical memory, use with 'memtest'",                shell_cmd_memtest},
-    {"pagetest", "Tests virtual memory mapping, use with 'pagetest'",       shell_cmd_pagetest},
-    {"pittest", "Tests the PIT timer, use with 'pittest'",                  ticks},
-    {"shutdown", "Shuts down the system, use with 'shutdown'",              shell_cmd_shutdown},
-    {"sleep", "Tests the PIT sleep function, use with 'sleep <milliseconds>'", sleep_test},
+    {"help",        "Show available commands, use with 'help `<command>`'",             shell_help},
+    {"clear",       "Clear the screen, use with 'clear'",                               shell_clear},
+    {"version",     "Show OS2 version, use with 'version'",                             shell_version},
+    {"keytest",     "Tests keyboard, use with 'keytest'",                               keyboard_test},
+    {"div0",        "Tests division-by-zero exception, use with 'div0'",                test_div0},
+    {"echo",        "Prints arguments, use with 'echo `options`'",                      shell_echo},
+    {"meminfo",     "Displays memory information, use with 'meminfo'",                  shell_meminfo},
+    {"memtest",     "Tests physical memory, use with 'memtest'",                        shell_cmd_memtest},
+    {"pagetest",    "Tests virtual memory mapping, use with 'pagetest'",                shell_cmd_pagetest},
+    {"pittest",     "Tests the PIT timer, use with 'pittest'",                          ticks},
+    {"shutdown",    "Shuts down the system, use with 'shutdown'",                       shell_cmd_shutdown},
+    {"sleep",       "Tests the PIT sleep function, use with 'sleep <milliseconds>'",    sleep_test},
 };
 
-
-
-static void sleep_test(int argc, cstring argv[])
-{
+static void sleep_test(int argc, cstring argv[]) {  
     if (argc != 2 && argc != 3) {
         tui_write("Usage: sleep [-m|-s|-M|-h] <value>\n");
         tui_write("  -m: milliseconds (default)\n");

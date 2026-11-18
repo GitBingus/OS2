@@ -16,8 +16,7 @@
     from continuing after a fatal error.
 */
 
-static void kernel_panic(const char *message)
-{
+static void kernel_panic(const char *message) {
     __asm__ volatile("cli");
 
     tui_write("\nKERNEL PANIC: ");
