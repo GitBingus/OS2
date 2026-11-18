@@ -8,6 +8,7 @@
 #include "pmm.h"
 #include "paging.h"
 #include "pit.h"
+#include "heap.h"
 
 /*
     Kernel panic: display an error and halt.
@@ -71,7 +72,54 @@ void kmain(u32int ebx) {
 
     // Initialise virtual memory and enable paging
     paging_init();
+    heap_init();
 
+    void *a = kmalloc(64);
+    void *b = kmalloc(128);
+
+    if (!a || !b) {
+        tui_write("[FAIL] Initial allocation\n");
+        return;
+    }
+
+    kfree(a);
+
+    void *c = kmalloc(64);
+
+    if (c != 0) {
+        tui_write("[PASS] Allocation after free\n");
+    } else {
+        tui_write("[FAIL] Allocation after free\n");
+    }
+
+    kfree(b);
+    kfree(c);
+
+    void *a2 = kmalloc(64);
+    void *b2 = kmalloc(128);
+    void *c2 = kmalloc(256);
+
+    if (!a2 || !b2 || !c2) {
+        tui_write("[FAIL] Initial allocations\n");
+        return;
+    }
+
+    kfree(a2);
+    kfree(b2);
+
+    // This allocation is larger than either freed block alone.
+    void *d = kmalloc(180);
+
+    if (d == a2) {
+        tui_write("[PASS] Adjacent free blocks coalesced\n");
+    } else {
+        tui_write("[FAIL] Coalescing test\n");
+    }
+
+    kfree(c2);
+    kfree(d);
+
+    tui_write("[OK] Heap memory manager\n");
     tui_write("[OK] Paging enabled\n");
 
     pit_init(PIT_DEFAULT_FREQUENCY);
