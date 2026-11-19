@@ -2,6 +2,7 @@
 #include "keyboard.h"
 #include "tui.h"
 
+
 input_action_t readline(string buffer, u32int size);
 
 input_action_t readline_history(
@@ -157,8 +158,13 @@ static input_action_t readline_internal(
     u32int input_start = tui_get_cursor();
     u32int index = 0;
     u32int cursor = 0;
-    
     u32int history_index = history_count;
+
+    char draft[128];
+    u32int draft_length = 0;
+    bool draft_saved = false;
+
+    (void)draft_length; // It is being used in the code, but the compiler may not recognise it.
     
     // Stop when Enter is pressed.
     for (;;) {
@@ -181,14 +187,29 @@ static input_action_t readline_internal(
         }
         
         if (c == INPUT_KEY_UP) {
-            if (history_get == 0) continue;
+            if (history_get == 0 || history_count == 0)
+                continue;
+
+            // Save whatever the user had typed before entering history.
+            if (history_index == history_count && !draft_saved) {
+                u32int i = 0;
+
+                while (i < size - 1 && i < index && buffer[i] != '\0') {
+                    draft[i] = buffer[i];
+                    i++;
+                }
+
+                draft[i] = '\0';
+                draft_length = i;
+                draft_saved = true;
+            }
+
             if (history_index > 0) {
                 history_index--;
-                
+
                 cstring previous = history_get(history_index);
-                
                 if (previous != 0) {
-                    if (previous != 0) input_replace_line (
+                    input_replace_line(
                         buffer,
                         size,
                         previous,
@@ -198,31 +219,44 @@ static input_action_t readline_internal(
                     );
                 }
             }
-            
+
             continue;
         }
-        
-        if (c == INPUT_KEY_DOWN)
-        {
-            if (history_index < history_count)
-            {
-                history_index++;
-                
-                if (history_index == history_count)
-                {
-                    // Restore a blank line or saved draft.
-                }
-                else
-                {
-                    cstring next = history_get(history_index);
-                    
-                    (void)next; // TODO: Retrieve and display the next history entry
+
+        if (c == INPUT_KEY_DOWN) {
+            if (history_get == 0 || history_index >= history_count)
+                continue;
+
+            history_index++;
+
+            if (history_index == history_count) {
+                // Restore the line that existed before history navigation.
+                input_replace_line(
+                    buffer,
+                    size,
+                    draft_saved ? draft : "",
+                    input_start,
+                    &index,
+                    &cursor
+                );
+            } else {
+                cstring next = history_get(history_index);
+
+                if (next != 0) {
+                    input_replace_line(
+                        buffer,
+                        size,
+                        next,
+                        input_start,
+                        &index,
+                        &cursor
+                    );
                 }
             }
-            
+
             continue;
         }
-        
+                
         if (c == '\n') {
             buffer[index] = '\0';
             tui_newline();
