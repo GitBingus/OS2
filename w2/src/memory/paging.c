@@ -216,12 +216,15 @@ void *vm_alloc_pages(u32int page_count, u32int flags) {
 }
 
 bool vm_free_pages(void *address, u32int page_count) {
-    if (address == NULL || page_count == 0) return false;
+    if (address == 0 || page_count == 0)
+        return false;
 
+    // Validate that the address is within the virtual allocation range and is page-aligned
     u32int virtual_base = (u32int)address;
-    if (virtual_base < VM_ALLOC_BASE || virtual_base >= VM_ALLOC_LIMIT) return false;
 
-    // Validation
+    if (virtual_base < VM_ALLOC_BASE ||
+        virtual_base >= VM_ALLOC_LIMIT)
+        return false;
 
     if ((virtual_base - VM_ALLOC_BASE) % PAGE_SIZE != 0)
         return false;
@@ -229,23 +232,30 @@ bool vm_free_pages(void *address, u32int page_count) {
     u32int first_page =
         (virtual_base - VM_ALLOC_BASE) / PAGE_SIZE;
 
-    if (first_page >= VM_PAGE_COUNT)
+    if (first_page >= VM_PAGE_COUNT ||
+        page_count > VM_PAGE_COUNT - first_page)
         return false;
 
-    if (page_count > VM_PAGE_COUNT - first_page)
-        return false;
+    // Check that all pages are currently allocated
+    for (u32int i = 0; i < page_count; i++) {
+        u32int virtual_address =
+            virtual_base + (i * PAGE_SIZE);
 
-    if (page_count == 0 || page_count > VM_PAGE_COUNT)
-        return 0;
+        u32int physical_address;
 
-    for (u32int i = 0; i < page_count; i++) { // Iterate through each page to free
-        u32int virtual = virtual_base + (i * PAGE_SIZE);
-        u32int physical;
-        if (!paging_unmap(virtual, &physical)) {
+        if (!paging_unmap(
+                virtual_address,
+                &physical_address)) {
             return false;
         }
-        pmm_free_frame(physical);
-        vm_mark_page_free((virtual - VM_ALLOC_BASE) / PAGE_SIZE);
+
+        if (!pmm_free_frame(physical_address)) {
+            return false;
+        }
+
+        vm_mark_page_free(
+            (virtual_address - VM_ALLOC_BASE) / PAGE_SIZE
+        );
     }
 
     return true;

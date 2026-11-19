@@ -17,7 +17,7 @@
 
 void paging_init(void);
 bool paging_map(u32int virtual_address, u32int physical_address, u32int flags);
-bool paging_unmap(u32int virtual_addr);
+bool paging_unmap(u32int virtual_addr, u32int *physical_address);
 
 void *vm_alloc_pages(u32int page_count, u32int flags);
 bool vm_free_pages(void *address, u32int page_count);

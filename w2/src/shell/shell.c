@@ -29,6 +29,7 @@ static void ticks(int argc, cstring argv[]);
 static void shell_cmd_shutdown(int argc, cstring argv[]);
 static void sleep_test(int argc, cstring argv[]);
 static void heap_test(int argc, cstring argv[]);
+static void shell_cmd_vmtest(int argc, cstring argv[]);
 
 static const shell_command_t commands[] = {
     {"help",        "Show available commands, use with 'help `<command>`'",             shell_help},
@@ -44,7 +45,165 @@ static const shell_command_t commands[] = {
     {"shutdown",    "Shuts down the system, use with 'shutdown'",                       shell_cmd_shutdown},
     {"sleep",       "Tests the PIT sleep function, use with 'sleep <milliseconds>'",    sleep_test},
     {"heap",        "Tests the heap memory manager, use with 'heap'",                   heap_test},
+    {"vmtest",      "Tests the virtual memory manager, use with 'vmtest'",              shell_cmd_vmtest},
 };
+
+static void shell_cmd_vmtest(int argc, cstring argv[]) {
+    (void)argc;
+    (void)argv;
+
+    const u32int page_count = 3;
+    const u32int test_flags = PAGE_WRITABLE;
+
+    tui_write("\nVirtual page allocation test\n");
+
+    /*
+     * Warm up the allocator first.
+     *
+     * The first mapping may allocate a page-table frame. Warming it up
+     * prevents that setup cost from affecting the later frame-count test.
+     */
+
+    void *warmup = vm_alloc_pages(1, test_flags);
+
+    if (warmup == 0) {
+        tui_write("[FAIL] Allocator warm-up\n");
+        return;
+    }
+
+    if (!vm_free_pages(warmup, 1)) {
+        tui_write("[FAIL] Allocator warm-up cleanup\n");
+        return;
+    }
+
+    u32int frames_before = pmm_get_free_frames();
+
+    /*
+     * Test 1: zero-page allocation must fail.
+     */
+    if (vm_alloc_pages(0, test_flags) == 0) {
+        tui_write("[PASS] Zero-page allocation rejected\n");
+    } else {
+        tui_write("[FAIL] Zero-page allocation rejected\n");
+    }
+
+    /*
+     * Test 2: allocate three contiguous pages.
+     */
+    void *allocation = vm_alloc_pages(page_count, test_flags);
+
+    if (allocation == 0) {
+        tui_write("[FAIL] Multi-page allocation\n");
+        return;
+    }
+
+    tui_write("[PASS] Multi-page allocation\n");
+
+    u8int *base = (u8int *)allocation;
+
+    /*
+     * Test 3: verify that allocation consumes exactly three frames.
+     */
+    u32int frames_after_alloc = pmm_get_free_frames();
+
+    if (frames_before >= page_count &&
+        frames_after_alloc == frames_before - page_count) {
+        tui_write("[PASS] Physical frame accounting\n");
+    } else {
+        tui_write("[FAIL] Physical frame accounting\n");
+    }
+
+    /*
+     * Test 4: write to and read from each page.
+     *
+     * Writing at different offsets proves that all pages are mapped,
+     * rather than only the first page being valid.
+     */
+    volatile u32int *page0 = (volatile u32int *)(base);
+    volatile u32int *page1 =
+        (volatile u32int *)(base + PAGE_SIZE);
+    volatile u32int *page2 =
+        (volatile u32int *)(base + (2 * PAGE_SIZE));
+
+    *page0 = 0x11111111;
+    *page1 = 0x22222222;
+    *page2 = 0x33333333;
+
+    if (*page0 == 0x11111111 &&
+        *page1 == 0x22222222 &&
+        *page2 == 0x33333333) {
+        tui_write("[PASS] Cross-page read/write\n");
+    } else {
+        tui_write("[FAIL] Cross-page read/write\n");
+    }
+
+    /*
+     * Test 5: unaligned free must be rejected.
+     */
+    if (!vm_free_pages((void *)(base + 1), 1)) {
+        tui_write("[PASS] Unaligned free rejected\n");
+    } else {
+        tui_write("[FAIL] Unaligned free rejected\n");
+    }
+
+    /*
+     * Test 6: freeing beyond the allocation must fail.
+     *
+     * This address is immediately after the three allocated pages.
+     */
+    if (!vm_free_pages((void *)(base + (page_count * PAGE_SIZE)), 1)) {
+        tui_write("[PASS] Invalid-range free rejected\n");
+    } else {
+        tui_write("[FAIL] Invalid-range free rejected\n");
+    }
+
+    /*
+     * Test 7: free the valid allocation.
+     */
+    if (vm_free_pages(allocation, page_count)) {
+        tui_write("[PASS] Multi-page free\n");
+    } else {
+        tui_write("[FAIL] Multi-page free\n");
+        return;
+    }
+
+    /*
+     * Test 8: double-free must be rejected.
+     */
+    if (!vm_free_pages(allocation, page_count)) {
+        tui_write("[PASS] Double free rejected\n");
+    } else {
+        tui_write("[FAIL] Double free rejected\n");
+    }
+
+    /*
+     * Test 9: all three physical frames should be available again.
+     */
+    u32int frames_after_free = pmm_get_free_frames();
+
+    if (frames_after_free == frames_before) {
+        tui_write("[PASS] Physical frames reclaimed\n");
+    } else {
+        tui_write("[FAIL] Physical frames reclaimed\n");
+    }
+
+    /*
+     * Test 10: the allocator should be able to reuse the freed region.
+     */
+    void *reuse = vm_alloc_pages(page_count, test_flags);
+
+    if (reuse != 0) {
+        tui_write("[PASS] Freed virtual range reused\n");
+
+        if (!vm_free_pages(reuse, page_count)) {
+            tui_write("[FAIL] Reused allocation cleanup\n");
+        }
+    } else {
+        tui_write("[FAIL] Freed virtual range reused\n");
+    }
+
+    tui_write("Virtual page allocation test complete.\n");
+}
 
 static void heap_test(int argc, cstring argv[]) {
     (void)argc;
@@ -248,8 +407,10 @@ static void shell_cmd_pagetest(int argc, cstring argv[]) {
         tui_write("[FAIL] Virtual memory read/write\n");
     }
 
+    u32int physical;
+
     // Remove the mapping
-    if (paging_unmap(virtual_addr)) {
+    if (paging_unmap(virtual_addr, &physical)) {
         tui_write("[PASS] Virtual memory unmapping\n");
     } else {
         tui_write("[FAIL] Virtual memory unmapping\n");
