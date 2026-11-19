@@ -190,7 +190,7 @@ static input_action_t readline_internal(
             if (history_get == 0 || history_count == 0)
                 continue;
 
-            // Save whatever the user had typed before entering history.
+            // Save whatever the user had typed before entering history
             if (history_index == history_count && !draft_saved) {
                 u32int i = 0;
 
@@ -230,7 +230,7 @@ static input_action_t readline_internal(
             history_index++;
 
             if (history_index == history_count) {
-                // Restore the line that existed before history navigation.
+                // Restore the line that existed before history navigation
                 input_replace_line(
                     buffer,
                     size,
@@ -265,6 +265,7 @@ static input_action_t readline_internal(
         
         else if (c == '\b') {
             if (cursor > 0) {
+                (void)draft_length; // It is being used in the code, but the compiler may not recognise it.
 
                 u32int previous_length = index;
 
