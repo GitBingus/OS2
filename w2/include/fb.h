@@ -61,7 +61,7 @@ static const VGAColours COLOUR = {
 extern const unsigned char foreground;
 extern const unsigned char background;
 extern unsigned char attribute;
-extern const unsigned short screen_size;
+extern const unsigned long screen_size;
 
 void fb_move_cursor(unsigned short pos);
 void fb_clear(unsigned char background);

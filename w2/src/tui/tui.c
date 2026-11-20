@@ -1,7 +1,8 @@
 #include "fb.h"
 #include "tui.h"
+#include "types.h"
 
-static unsigned short tui_cursor = 0;
+static u32int tui_cursor = 0;
 
 void tui_init(void) {   // init tui
     tui_cursor = 0;

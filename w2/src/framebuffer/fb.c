@@ -4,7 +4,7 @@
 const unsigned char foreground = 0x0F;
 const unsigned char background = 0x00;
 unsigned char attribute = FB_COLOUR(0x0F, 0x00);
-const unsigned short screen_size = SCREEN_WIDTH * SCREEN_HEIGHT;
+const unsigned long screen_size = SCREEN_WIDTH * SCREEN_HEIGHT;
 
 /* Write one character and its colour to a screen cell. */
 void fb_write_cell(unsigned int i, char c,
