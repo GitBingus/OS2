@@ -91,11 +91,11 @@ static void kernel_panic(const char *message) {
 }
 
 /*
- * Main kernel entry point.
- *
- * EBX contains the physical address of the Multiboot
- * information structure supplied by GRUB.
- */
+    * Main kernel entry point.
+    *
+    * EBX contains the physical address of the Multiboot
+    * information structure supplied by GRUB.
+*/
 
 void kmain(u32int ebx) {
     __asm__ volatile("cli");

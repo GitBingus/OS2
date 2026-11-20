@@ -127,7 +127,6 @@ DEPS = $(C_OBJECTS:.o=.d)
 
 KERNEL = $(BOOT_DIR)/kernel.elf
 ISO = os.iso
-BOOTIMAGE = boot/grub/stage2_eltorito
 
 
 # 5. Default Target
@@ -160,18 +159,9 @@ $(KERNEL): $(OBJECTS) $(LINKER)
 	$(LD) -T $(LINKER) -m elf_i386 $(OBJECTS) -o $@
 
 
-# 9. Build Bootable ISO
-$(ISO): $(KERNEL) $(GRUB_DIR)/stage2_eltorito $(GRUB_DIR)/menu.lst
-	$(GENISOIMAGE) -R \
-		-b $(BOOTIMAGE) \
-		-no-emul-boot \
-		-boot-load-size 4 \
-		-A os \
-		-input-charset utf8 \
-		-quiet \
-		-boot-info-table \
-		-o $@ \
-		$(ISO_DIR)
+# 9. Build Bootable ISO using new GRUB 2
+$(ISO): $(KERNEL) $(GRUB_DIR)/grub.cfg
+	grub-mkrescue -o $(ISO) $(ISO_DIR)
 
 
 # 10. Clean Build Artifacts
@@ -210,17 +200,14 @@ run: $(ISO)
 
 run_testmode: $(ISO)
 	$(QEMU) \
-		-serial $(QEMU_SERIAL) \
+		-serial file:com1.log \
+		-monitor none \
+		-vga std \
 		-boot d \
-		-cdrom $(ISO) \
+		-cdrom os.iso \
 		-m 32 \
-		-no-reboot \
-		-vga $(QEMU_VGA) \
-		-display $(QEMU_DISPLAY) \
-		-accel $(QEMU_ACCEL) \
-		-display $(QEMU_DISPLAY) \
-		-d int \
-		-D qemu-interrupts.log
+		-accel tcg \
+		-display gtk
 
 
 # 14. Help
