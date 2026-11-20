@@ -1,12 +1,26 @@
 #ifndef FB_H
 #define FB_H
 
+// 1 = framebuffer mode, 0 = VGA text mode
+#ifndef FB_MODE
+#define FB_MODE 0
+#endif
+
+#include "types.h"
+#include "kbool.h"
+#include "multiboot.h"
+
 #define FB_COLOUR(fg, bg) (((bg) << 4) | (fg))
 
-#define VGA_MEMORY ((volatile unsigned short *)0xB8000)
+#define VGA_MEMORY ((volatile unsigned short *)0xB8000) // VGA text mode memory address
 
+#if FB_MODE
+#define SCREEN_WIDTH  128
+#define SCREEN_HEIGHT 48
+#else
 #define SCREEN_WIDTH  80
 #define SCREEN_HEIGHT 25
+#endif
 
 #define FB_COMMAND_PORT         0x3D4
 #define FB_DATA_PORT            0x3D5
@@ -58,13 +72,32 @@ static const VGAColours COLOUR = {
     .WHITE         = 0xF
 };
 
+typedef struct {
+    u32int  address;
+    u32int  width;
+    u32int  height;
+    u32int  pitch;
+    u8int   bpp;
+    u8int   red_position;
+    u8int   red_mask_size;
+    u8int   green_position;
+    u8int   green_mask_size;
+    u8int   blue_position;
+    u8int   blue_mask_size;
+} framebuffer_t;
+
 extern const unsigned char foreground;
 extern const unsigned char background;
 extern unsigned char attribute;
 extern const unsigned long screen_size;
+extern framebuffer_t framebuffer;
 
+bool framebuffer_init(multiboot_info_t *mbi);
+void framebuffer_put_pixel(u32int x, u32int y, u32int color);
+u32int framebuffer_rgb(u8int red, u8int green, u8int blue);
 void fb_move_cursor(unsigned short pos);
 void fb_clear(unsigned char background);
-void fb_write_cell(unsigned int i, char c, unsigned char fg, unsigned char bg);
+void fb_write_cell(u32int index, char c, unsigned char fg, unsigned char bg);
+void fb_scroll(void);
 
 #endif

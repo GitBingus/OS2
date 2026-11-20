@@ -5,14 +5,18 @@ UNAME_S := $(shell uname -s)
 
 NASM := nasm
 QEMU := qemu-system-i386
+FB_MODE ?= 0
 
+NASMFLAGS := -DFB_MODE=$(FB_MODE)
 ifeq ($(UNAME_S),Darwin)
     # macOS - Apple Silicon or Intel
     CC := i686-elf-gcc
     LD := i686-elf-ld
     GENISOIMAGE := mkisofs
-    QEMU_DISPLAY := cocoa
+    QEMU_DISPLAY := cocoa,zoom-to-fit=on
     QEMU_ACCEL := tcg
+	QEMU_VGA := std
+    QEMU_SERIAL := stdio
 
 else ifeq ($(UNAME_S),Linux)
     # Linux, including Windows Subsystem for Linux
@@ -21,6 +25,9 @@ else ifeq ($(UNAME_S),Linux)
     GENISOIMAGE := genisoimage
     QEMU_DISPLAY := curses
     QEMU_ACCEL := tcg
+	QEMU_VGA := std
+    QEMU_SERIAL := null
+    QEMU_SERIAL := null
 
 else
     $(error Unsupported build environment: $(UNAME_S). Use macOS, Linux, or WSL on Windows)
@@ -52,7 +59,7 @@ PIT_DIR = $(SRC_DIR)/pit
 
 
 # 3. Compiler Flags
-CFLAGS = -m32 -ffreestanding -fno-pie \
+CFLAGS = -m32 -ffreestanding -fno-pie -DFB_MODE=$(FB_MODE) \
          -fno-stack-protector -Wall -Wextra -Werror \
          -I$(INCLUDE_DIR) -MMD -MP
 
@@ -130,7 +137,7 @@ all: $(ISO)
 
 # 6. Assemble Bootloader, GDT and Interrupt Support
 $(ASM_OBJ): $(ASM_SRC)
-	$(NASM) -f elf32 $< -o $@
+	$(NASM) $(NASMFLAGS) -f elf32 $< -o $@
 
 $(GDT_ASM_OBJ): $(GDT_ASM_SRC)
 	$(NASM) -f elf32 $< -o $@
@@ -193,19 +200,23 @@ iso: $(ISO)
 run: $(ISO)
 	$(QEMU) \
 		-monitor telnet:127.0.0.1:45454,server,nowait \
-		-serial null \
+		-serial $(QEMU_SERIAL) \
 		-boot d \
 		-cdrom $(ISO) \
 		-m 32 \
+		-vga $(QEMU_VGA) \
+		-display $(QEMU_DISPLAY) \
 		-accel $(QEMU_ACCEL) \
-		-display $(QEMU_DISPLAY)
 
 run_testmode: $(ISO)
 	$(QEMU) \
+		-serial $(QEMU_SERIAL) \
 		-boot d \
 		-cdrom $(ISO) \
 		-m 32 \
 		-no-reboot \
+		-vga $(QEMU_VGA) \
+		-display $(QEMU_DISPLAY) \
 		-accel $(QEMU_ACCEL) \
 		-display $(QEMU_DISPLAY) \
 		-d int \

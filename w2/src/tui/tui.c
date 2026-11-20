@@ -149,6 +149,10 @@ void tui_backspace(void)
 
 void tui_scroll(void)
 {
+#if FB_MODE
+    fb_scroll();
+    tui_cursor = (SCREEN_HEIGHT - 1) * SCREEN_WIDTH;
+#else
     // move rows 1–24 up into rows 0–23
     for (unsigned int row = 0; row < SCREEN_HEIGHT - 1; row++)
     {
@@ -173,7 +177,7 @@ void tui_scroll(void)
 
     // position cursor at the beginning of the last row
     tui_cursor = (SCREEN_HEIGHT - 1) * SCREEN_WIDTH;
-
+#endif
     fb_move_cursor(tui_cursor);
 }
 
