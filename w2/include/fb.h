@@ -3,7 +3,7 @@
 
 // 1 = framebuffer mode, 0 = VGA text mode
 #ifndef FB_MODE
-#define FB_MODE 0
+#define FB_MODE 1
 #endif
 
 #include "types.h"

@@ -5,7 +5,7 @@ UNAME_S := $(shell uname -s)
 
 NASM := nasm
 QEMU := qemu-system-i386
-FB_MODE ?= 0
+FB_MODE ?= 1
 SERIAL_LOG ?= com1.log
 
 NASMFLAGS := -DFB_MODE=$(FB_MODE)
@@ -24,7 +24,7 @@ else ifeq ($(UNAME_S),Linux)
     CC := gcc
     LD := ld
     GENISOIMAGE := genisoimage
-    QEMU_DISPLAY := curses
+    QEMU_DISPLAY := gtk,zoom-to-fit=on
     QEMU_ACCEL := tcg
 	QEMU_VGA := std
     QEMU_SERIAL := file:$(SERIAL_LOG)
