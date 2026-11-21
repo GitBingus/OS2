@@ -11,6 +11,7 @@
 #include "heap.h"
 #include "fb.h"
 #include "io.h"
+#include "kstring.h"
 
 #define COM1 0x3F8
 #define VGA_TEXT_MEMORY ((volatile u16int *)0xB8000)
@@ -29,6 +30,32 @@ static void serial_write(const char *message) {
         message++;
     }
 }
+
+#if FB_MODE
+static void serial_write_uint(u32int value) {
+    char buffer[11];
+    uint_to_string(value, buffer);
+    serial_write(buffer);
+}
+#endif
+
+#if FB_MODE
+static void tui_write_hex(u32int value) {
+    const char digits[] = "0123456789ABCDEF";
+
+    tui_write("0x");
+    for (int shift = 28; shift >= 0; shift -= 4) {
+        char digit[2] = {digits[(value >> shift) & 0x0F], '\0'};
+        tui_write(digit);
+    }
+}
+
+static void tui_write_uint(u32int value) {
+    char buffer[11];
+    uint_to_string(value, buffer);
+    tui_write(buffer);
+}
+#endif
 
 #if FB_MODE
 static void boot_trace_hex(const char *label, u32int value) {
@@ -151,11 +178,46 @@ void kmain(u32int ebx) {
     boot_trace_hex("[FB] address=", (u32int)mb_info->framebuffer_addr);
     if (!framebuffer_init(mb_info)) kernel_panic("Framebuffer unavailable");
     boot_trace("[BOOT] Framebuffer initialised\n");
+    serial_write("[FB] resolution=");
+    serial_write_uint(mb_info->framebuffer_width);
+    serial_putc('x');
+    serial_write_uint(mb_info->framebuffer_height);
+    serial_write(" bpp=");
+    serial_write_uint(mb_info->framebuffer_bpp);
+    serial_write(" pitch=");
+    serial_write_uint(mb_info->framebuffer_pitch);
+    serial_write(" type=");
+    serial_write_uint(mb_info->framebuffer_type);
+    serial_write(" address=0x");
+    for (int shift = 28; shift >= 0; shift -= 4) {
+        u8int digit = (u8int)(((u32int)mb_info->framebuffer_addr >> shift) & 0x0F);
+        serial_putc(digit < 10 ? (char)('0' + digit) : (char)('A' + digit - 10));
+    }
+    serial_putc('\n');
 #endif
-
     boot_trace("[BOOT] Initialising TUI\n");
     tui_init();
     boot_trace("[BOOT] TUI initialised\n");
+
+#if FB_MODE
+    tui_write("Framebuffer: ");
+    tui_write_uint(mb_info->framebuffer_width);
+    tui_write("x");
+    tui_write_uint(mb_info->framebuffer_height);
+    tui_write(" ");
+    tui_write_uint(mb_info->framebuffer_bpp);
+    tui_write("bpp pitch=");
+    tui_write_uint(mb_info->framebuffer_pitch);
+    tui_write(" type=");
+    tui_write_uint(mb_info->framebuffer_type);
+    tui_write(" addr=");
+    tui_write_hex((u32int)mb_info->framebuffer_addr);
+    tui_write("\n");
+#else
+    tui_write("Display: VGA text mode\n");
+    serial_write("[BOOT] Display: VGA text mode\n");
+#endif
+
     tui_write("Starting OS2...\n");
     tui_write("[OK] Physical memory manager\n");
     tui_write("[OK] Interrupt descriptor table\n");
