@@ -6,6 +6,7 @@ UNAME_S := $(shell uname -s)
 NASM := nasm
 QEMU := qemu-system-i386
 FB_MODE ?= 0
+SERIAL_LOG ?= com1.log
 
 NASMFLAGS := -DFB_MODE=$(FB_MODE)
 ifeq ($(UNAME_S),Darwin)
@@ -26,8 +27,7 @@ else ifeq ($(UNAME_S),Linux)
     QEMU_DISPLAY := curses
     QEMU_ACCEL := tcg
 	QEMU_VGA := std
-    QEMU_SERIAL := null
-    QEMU_SERIAL := null
+    QEMU_SERIAL := file:$(SERIAL_LOG)
 
 else
     $(error Unsupported build environment: $(UNAME_S). Use macOS, Linux, or WSL on Windows)
@@ -44,6 +44,8 @@ FRAMEBUFFER_DIR = $(SRC_DIR)/framebuffer
 TUI_DIR = $(SRC_DIR)/tui
 BOOT_DIR = $(ISO_DIR)/boot
 GRUB_DIR = $(BOOT_DIR)/grub
+GRUB_TEMPLATE = $(GRUB_DIR)/grub.cfg.in
+GRUB_CONFIG = $(GRUB_DIR)/grub.cfg
 GDT_DIR = $(SRC_DIR)/gdt
 KEYBOARD_DIR = $(SRC_DIR)/keyboard
 KSTRING_DIR = $(DRIVER_DIR)
@@ -127,6 +129,13 @@ DEPS = $(C_OBJECTS:.o=.d)
 
 KERNEL = $(BOOT_DIR)/kernel.elf
 ISO = os.iso
+BUILD_DIR = build
+BUILD_MODE_STAMP = $(BUILD_DIR)/.fb_mode_$(FB_MODE)
+ifeq ($(FB_MODE),1)
+GRUB_DEFAULT = 1
+else
+GRUB_DEFAULT = 0
+endif
 
 
 # 5. Default Target
@@ -135,7 +144,12 @@ all: $(ISO)
 
 
 # 6. Assemble Bootloader, GDT and Interrupt Support
-$(ASM_OBJ): $(ASM_SRC)
+$(BUILD_MODE_STAMP):
+	mkdir -p $(BUILD_DIR)
+	rm -f $(BUILD_DIR)/.fb_mode_0 $(BUILD_DIR)/.fb_mode_1
+	printf '%s\n' "$(FB_MODE)" > $@
+
+$(ASM_OBJ): $(ASM_SRC) $(BUILD_MODE_STAMP)
 	$(NASM) $(NASMFLAGS) -f elf32 $< -o $@
 
 $(GDT_ASM_OBJ): $(GDT_ASM_SRC)
@@ -149,7 +163,7 @@ $(IDT_ASM_OBJ): $(IDT_ASM_SRC)
 
 
 # 7. Compile C Source Files
-%.o: %.c
+%.o: %.c $(BUILD_MODE_STAMP)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
@@ -160,14 +174,18 @@ $(KERNEL): $(OBJECTS) $(LINKER)
 
 
 # 9. Build Bootable ISO using new GRUB 2
-$(ISO): $(KERNEL) $(GRUB_DIR)/grub.cfg
+$(GRUB_CONFIG): $(GRUB_TEMPLATE) Makefile $(BUILD_MODE_STAMP)
+	sed 's/set default=@FB_DEFAULT@/set default=$(GRUB_DEFAULT)/' $< > $@
+
+$(ISO): $(KERNEL) $(GRUB_CONFIG)
 	grub-mkrescue -o $(ISO) $(ISO_DIR)
 
 
 # 10. Clean Build Artifacts
 .PHONY: clean
 clean:
-	rm -f $(OBJECTS) $(DEPS) $(KERNEL) $(ISO)
+	rm -f $(OBJECTS) $(DEPS) $(KERNEL) $(ISO) $(GRUB_CONFIG) $(BUILD_DIR)/.fb_mode_0 $(BUILD_DIR)/.fb_mode_1
+	rmdir $(BUILD_DIR) 2>/dev/null || true
 
 
 # 11. Full Rebuild
