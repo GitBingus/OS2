@@ -1,11 +1,9 @@
 global loader                   ; loader is the entry point for the bootloader
 
-MAGIC_NUMBER equ 0x1BADB002
-ALIGN_MODULES equ 0x00000003    ; align modules on page boundaries
-
-FLAGS equ ALIGN_MODULES
-
-CHECKSUM equ -(MAGIC_NUMBER + FLAGS)
+MAGIC_NUMBER equ 0x1BADB002     ; defines the magic number for the multiboot header
+ALIGN_MODULES equ 0x00000003    ; tell GRUB to align modules, Here, 0x03 requests page-aligned boot modules (bit 0) and basic memory information (bit 1)
+FLAGS equ 0x00000003            ; defines the flags for the multiboot header
+CHECKSUM equ -(MAGIC_NUMBER + ALIGN_MODULES)  ; defines the checksum for the multiboot header
 
 KERNEL_STACK_SIZE equ 4096      ; defines the size of the kernel stack in bytes
 
@@ -19,8 +17,8 @@ section .bss
 section .text
     align 4                     ; aligns the multiboot header to a 4-byte boundary
     dd MAGIC_NUMBER             ; defines the magic number for the multiboot header
-    dd FLAGS                    ; defines the multiboot feature flags
-    dd CHECKSUM                 ; validates the header
+    dd FLAGS                    ; defines the flags for the multiboot header
+    dd CHECKSUM                 ; defines the checksum for the multiboot header
 
 loader:
     mov esp, kernel_stack + KERNEL_STACK_SIZE   ; sets the stack pointer to the top of the kernel stack

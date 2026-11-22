@@ -5,28 +5,22 @@ UNAME_S := $(shell uname -s)
 
 NASM := nasm
 QEMU := qemu-system-i386
-FB_MODE ?= 0
-SERIAL_LOG ?= com1.log
 
 ifeq ($(UNAME_S),Darwin)
     # macOS - Apple Silicon or Intel
     CC := i686-elf-gcc
     LD := i686-elf-ld
     GENISOIMAGE := mkisofs
-    QEMU_DISPLAY := cocoa,zoom-to-fit=on
+    QEMU_DISPLAY := cocoa
     QEMU_ACCEL := tcg
-	QEMU_VGA := std
-    QEMU_SERIAL := stdio
 
 else ifeq ($(UNAME_S),Linux)
     # Linux, including Windows Subsystem for Linux
     CC := gcc
     LD := ld
     GENISOIMAGE := genisoimage
-    QEMU_DISPLAY := gtk,zoom-to-fit=on
+    QEMU_DISPLAY := gtk
     QEMU_ACCEL := tcg
-	QEMU_VGA := std
-    QEMU_SERIAL := file:$(SERIAL_LOG)
 
 else
     $(error Unsupported build environment: $(UNAME_S). Use macOS, Linux, or WSL on Windows)
@@ -43,8 +37,6 @@ FRAMEBUFFER_DIR = $(SRC_DIR)/framebuffer
 TUI_DIR = $(SRC_DIR)/tui
 BOOT_DIR = $(ISO_DIR)/boot
 GRUB_DIR = $(BOOT_DIR)/grub
-GRUB_TEMPLATE = $(GRUB_DIR)/grub.cfg.in
-GRUB_CONFIG = $(GRUB_DIR)/grub.cfg
 GDT_DIR = $(SRC_DIR)/gdt
 KEYBOARD_DIR = $(SRC_DIR)/keyboard
 KSTRING_DIR = $(DRIVER_DIR)
@@ -57,6 +49,8 @@ MEM_DIR = $(SRC_DIR)/memory
 POWER_DIR = $(SRC_DIR)/power
 ACPI_DIR = $(SRC_DIR)/acpi
 PIT_DIR = $(SRC_DIR)/pit
+GRUB_TEMPLATE = $(GRUB_DIR)/grub.cfg.in
+GRUB_CONFIG = $(GRUB_DIR)/grub.cfg
 
 
 # 3. Compiler Flags
@@ -128,12 +122,6 @@ DEPS = $(C_OBJECTS:.o=.d)
 
 KERNEL = $(BOOT_DIR)/kernel.elf
 ISO = os.iso
-BUILD_DIR = build
-ifeq ($(FB_MODE),1)
-GRUB_DEFAULT = 1
-else
-GRUB_DEFAULT = 0
-endif
 
 
 # 5. Default Target
@@ -156,7 +144,7 @@ $(IDT_ASM_OBJ): $(IDT_ASM_SRC)
 
 
 # 7. Compile C Source Files
-%.o: %.c $(BUILD_MODE_STAMP)
+%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
@@ -167,7 +155,7 @@ $(KERNEL): $(OBJECTS) $(LINKER)
 
 
 # 9. Build Bootable ISO using new GRUB 2
-$(GRUB_CONFIG): $(GRUB_TEMPLATE) Makefile $(BUILD_MODE_STAMP)
+$(GRUB_CONFIG): $(GRUB_TEMPLATE) Makefile 
 	sed 's/set default=@FB_DEFAULT@/set default=$(GRUB_DEFAULT)/' $< > $@
 
 $(ISO): $(KERNEL) $(GRUB_CONFIG)
@@ -177,8 +165,7 @@ $(ISO): $(KERNEL) $(GRUB_CONFIG)
 # 10. Clean Build Artifacts
 .PHONY: clean
 clean:
-	rm -f $(OBJECTS) $(DEPS) $(KERNEL) $(ISO) $(GRUB_CONFIG) $(BUILD_DIR)/.fb_mode_0 $(BUILD_DIR)/.fb_mode_1
-	rmdir $(BUILD_DIR) 2>/dev/null || true
+	rm -f $(OBJECTS) $(DEPS) $(KERNEL) $(ISO)
 
 
 # 11. Full Rebuild
@@ -201,24 +188,23 @@ iso: $(ISO)
 run: $(ISO)
 	$(QEMU) \
 		-monitor telnet:127.0.0.1:45454,server,nowait \
-		-serial file:qemu.log \
+		-serial null \
 		-boot d \
 		-cdrom $(ISO) \
 		-m 32 \
-		-vga $(QEMU_VGA) \
-		-display $(QEMU_DISPLAY) \
 		-accel $(QEMU_ACCEL) \
+		-display $(QEMU_DISPLAY)
 
 run_testmode: $(ISO)
 	$(QEMU) \
-		-serial file:qemu.log \
-		-monitor none \
-		-vga std \
 		-boot d \
-		-cdrom os.iso \
+		-cdrom $(ISO) \
 		-m 32 \
-		-accel tcg \
-		-display gtk
+		-no-reboot \
+		-accel $(QEMU_ACCEL) \
+		-display $(QEMU_DISPLAY) \
+		-d int \
+		-D qemu-interrupts.log
 
 
 # 14. Help
