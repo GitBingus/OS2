@@ -8,6 +8,7 @@
 #include "power.h"
 #include "pit.h"
 #include "heap.h"
+#include "fb.h"
 
 #define SHELL_BUFFER 128
 #define SHELL_MAX_ARGS 16
@@ -603,6 +604,7 @@ void shell_execute(string input) {
 void shell_init(void) {
     char buffer[SHELL_BUFFER_SIZE];
 
+    tui_set_cursor((SCREEN_HEIGHT - 1) * SCREEN_WIDTH);
     tui_write("Welcome to OS2!\n");
 
     for (;;)
@@ -664,6 +666,7 @@ static void shell_clear(int argc, cstring argv[]) {
     (void)argv;
 
     tui_clear();
+    tui_set_cursor((SCREEN_HEIGHT - 1) * SCREEN_WIDTH);
 }
 
 static void shell_version(int argc, cstring argv[]) {

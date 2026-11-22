@@ -130,8 +130,18 @@ void tui_move_right(void) {
 }
 
 void tui_newline(void) {
-    tui_cursor = ((tui_cursor / SCREEN_WIDTH) + 1) * SCREEN_WIDTH;
-    if (tui_cursor >= screen_size) tui_scroll();
+    u32int column = tui_cursor % SCREEN_WIDTH;
+
+    if (column == 0) {
+        /* Already at the start of the next row. */
+        if (tui_cursor >= screen_size)
+            tui_scroll();
+    } else {
+        tui_cursor = (tui_cursor / SCREEN_WIDTH + 1) * SCREEN_WIDTH;
+
+        if (tui_cursor >= screen_size)
+            tui_scroll();
+    }
 
     fb_move_cursor(tui_cursor);
 }
@@ -147,12 +157,7 @@ void tui_backspace(void)
     fb_move_cursor(tui_cursor);
 }
 
-void tui_scroll(void)
-{
-#if FB_MODE
-    fb_scroll();
-    tui_cursor = (SCREEN_HEIGHT - 1) * SCREEN_WIDTH;
-#else
+void tui_scroll(void) {
     // move rows 1–24 up into rows 0–23
     for (unsigned int row = 0; row < SCREEN_HEIGHT - 1; row++)
     {
@@ -177,17 +182,13 @@ void tui_scroll(void)
 
     // position cursor at the beginning of the last row
     tui_cursor = (SCREEN_HEIGHT - 1) * SCREEN_WIDTH;
-#endif
+    
     fb_move_cursor(tui_cursor);
 }
 
 void tui_clear(void) {
-    fb_clear(background);
-
-    // 2. Reset your TUI cursor position
+    fb_clear(FB_BLACK);
     tui_cursor = 0;
-
-    // 3. Move the hardware cursor to (0, 0)
     fb_move_cursor(0);
 }
 

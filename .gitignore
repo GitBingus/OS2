@@ -12,3 +12,4 @@ w2/TODO
 requirements.txt
 *.log
 .DS_Store
+*.txt

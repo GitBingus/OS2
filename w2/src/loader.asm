@@ -1,11 +1,7 @@
 global loader                   ; loader is the entry point for the bootloader
 
-%ifndef FB_MODE
-%define FB_MODE 0
-%endif
-
 MAGIC_NUMBER equ 0x1BADB002
-ALIGN_MODULES equ 0x00000003
+ALIGN_MODULES equ 0x00000003    ; align modules on page boundaries
 
 FLAGS equ ALIGN_MODULES
 
@@ -25,7 +21,6 @@ section .text
     dd MAGIC_NUMBER             ; defines the magic number for the multiboot header
     dd FLAGS                    ; defines the multiboot feature flags
     dd CHECKSUM                 ; validates the header
-
 
 loader:
     mov esp, kernel_stack + KERNEL_STACK_SIZE   ; sets the stack pointer to the top of the kernel stack

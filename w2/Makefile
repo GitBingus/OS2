@@ -5,10 +5,9 @@ UNAME_S := $(shell uname -s)
 
 NASM := nasm
 QEMU := qemu-system-i386
-FB_MODE ?= 1
+FB_MODE ?= 0
 SERIAL_LOG ?= com1.log
 
-NASMFLAGS := -DFB_MODE=$(FB_MODE)
 ifeq ($(UNAME_S),Darwin)
     # macOS - Apple Silicon or Intel
     CC := i686-elf-gcc
@@ -61,7 +60,7 @@ PIT_DIR = $(SRC_DIR)/pit
 
 
 # 3. Compiler Flags
-CFLAGS = -m32 -ffreestanding -fno-pie -DFB_MODE=$(FB_MODE) \
+CFLAGS = -m32 -ffreestanding -fno-pie \
          -fno-stack-protector -Wall -Wextra -Werror \
          -I$(INCLUDE_DIR) -MMD -MP
 
@@ -130,7 +129,6 @@ DEPS = $(C_OBJECTS:.o=.d)
 KERNEL = $(BOOT_DIR)/kernel.elf
 ISO = os.iso
 BUILD_DIR = build
-BUILD_MODE_STAMP = $(BUILD_DIR)/.fb_mode_$(FB_MODE)
 ifeq ($(FB_MODE),1)
 GRUB_DEFAULT = 1
 else
@@ -144,13 +142,8 @@ all: $(ISO)
 
 
 # 6. Assemble Bootloader, GDT and Interrupt Support
-$(BUILD_MODE_STAMP):
-	mkdir -p $(BUILD_DIR)
-	rm -f $(BUILD_DIR)/.fb_mode_0 $(BUILD_DIR)/.fb_mode_1
-	printf '%s\n' "$(FB_MODE)" > $@
-
-$(ASM_OBJ): $(ASM_SRC) $(BUILD_MODE_STAMP)
-	$(NASM) $(NASMFLAGS) -f elf32 $< -o $@
+$(ASM_OBJ): $(ASM_SRC)
+	$(NASM) -f elf32 $< -o $@
 
 $(GDT_ASM_OBJ): $(GDT_ASM_SRC)
 	$(NASM) -f elf32 $< -o $@
@@ -208,7 +201,7 @@ iso: $(ISO)
 run: $(ISO)
 	$(QEMU) \
 		-monitor telnet:127.0.0.1:45454,server,nowait \
-		-serial $(QEMU_SERIAL) \
+		-serial file:qemu.log \
 		-boot d \
 		-cdrom $(ISO) \
 		-m 32 \
@@ -218,7 +211,7 @@ run: $(ISO)
 
 run_testmode: $(ISO)
 	$(QEMU) \
-		-serial file:com1.log \
+		-serial file:qemu.log \
 		-monitor none \
 		-vga std \
 		-boot d \

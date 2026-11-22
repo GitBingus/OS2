@@ -1,10 +1,7 @@
 #ifndef FB_H
 #define FB_H
 
-// 1 = framebuffer mode, 0 = VGA text mode
-#ifndef FB_MODE
-#define FB_MODE 1
-#endif
+#define FB_MODE 0 // Set to 1 to enable framebuffer mode, 0 for VGA text mode
 
 #include "types.h"
 #include "kbool.h"
@@ -14,13 +11,8 @@
 
 #define VGA_MEMORY ((volatile unsigned short *)0xB8000) // VGA text mode memory address
 
-#if FB_MODE
-#define SCREEN_WIDTH  128
-#define SCREEN_HEIGHT 48
-#else
 #define SCREEN_WIDTH  80
 #define SCREEN_HEIGHT 25
-#endif
 
 #define FB_COMMAND_PORT         0x3D4
 #define FB_DATA_PORT            0x3D5
