@@ -1,6 +1,6 @@
 # OS2
 
-A small 32-bit x86 operating system kernel written in C and NASM, booted by GRUB 2 (Multiboot 1) and run in QEMU. It was built for the Operating Systems 2 module at <a name="UWE SCCT"></a> and ends in an interactive shell with keyboard input, a timer, memory management and a set of self-test commands.
+A small 32-bit x86 operating system kernel written in C and NASM, booted by GRUB 2 (Multiboot 1) and run in QEMU. It was built for the Operating Systems 2 module at <a name="[UWE SCCT](https://github.com/uwe-scct)"></a>UWE and ends in an interactive shell with keyboard input, a timer, memory management and a set of self-test commands.
 
 | Directory | Contents |
 |-----------|----------|
