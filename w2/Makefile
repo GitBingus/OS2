@@ -13,7 +13,7 @@ ifeq ($(UNAME_S),Darwin)
     GENISOIMAGE := mkisofs
     QEMU_DISPLAY := cocoa,zoom-to-fit=on
     QEMU_ACCEL := tcg
-	MKRESCUE := x86_64-elf-grub-mkrescue
+	MKRESCUE := i686-elf-grub-mkrescue
 
 else ifeq ($(UNAME_S),Linux)
     # Linux, including Windows Subsystem for Linux
