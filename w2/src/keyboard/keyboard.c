@@ -276,8 +276,7 @@ static void keyboard_enqueue(keyboard_event_t event) {
     keyboard_event_count++; // counts successfully queued events
 }
 
-bool keyboard_dequeue(keyboard_event_t *event)
-{
+bool keyboard_dequeue(keyboard_event_t *event) {
     if (buffer_head == buffer_tail) {
         return false;
     }
