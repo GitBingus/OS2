@@ -3,8 +3,6 @@
 
 static unsigned short tui_cursor = 0;
 
-static int string_start = 0;
-
 void tui_init(void) {   // init tui
     tui_cursor = 0;
     fb_clear(FB_BLACK);
@@ -29,19 +27,40 @@ void tui_putchar(char c) {
 
 }
 
-// if (string-start > 0 && max_col == current_col) then wrap the word to the next line, otherwise just print the character
-
 void tui_write(cstring str) {
     while (*str != '\0') {
-        if ((string_start > 0) && (tui_cursor % SCREEN_WIDTH == SCREEN_WIDTH - 1)) {
+        unsigned int word_length = 0;
+
+        if (*str == '\n') {
             tui_newline();
-            string_start = 0;
-            tui_newline();
+            str++;
+            continue;
+        }
+
+        if (*str == ' ') {
+            tui_putchar(*str++);
+            continue;
+        }
+
+        // Calculate the length of the next word
+        while (str[word_length] != '\0' &&
+               str[word_length] != ' ' &&
+               str[word_length] != '\n') {
+            word_length++;
+        }
+
+        unsigned int column = tui_cursor % SCREEN_WIDTH;     // Find the current column on the screen
+        unsigned int remaining = SCREEN_WIDTH - column;     // Calculate remaining space on the current line
+
+        // If the word is longer than the remaining space on the line, move to the next line
+        if (column != 0 && word_length > remaining) {
             tui_newline();
         }
-        tui_putchar(*str);
-        str++;
-        string_start++;
+
+        while (word_length != 0) { // Write the word character by character
+            tui_putchar(*str++);
+            word_length--;
+        }
     }
 }
 
