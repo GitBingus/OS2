@@ -11,8 +11,9 @@ ifeq ($(UNAME_S),Darwin)
     CC := i686-elf-gcc
     LD := i686-elf-ld
     GENISOIMAGE := mkisofs
-    QEMU_DISPLAY := cocoa
+    QEMU_DISPLAY := cocoa,zoom-to-fit=on
     QEMU_ACCEL := tcg
+	MKRESCUE := x86_64-elf-grub-mkrescue
 
 else ifeq ($(UNAME_S),Linux)
     # Linux, including Windows Subsystem for Linux
@@ -21,6 +22,7 @@ else ifeq ($(UNAME_S),Linux)
     GENISOIMAGE := genisoimage
     QEMU_DISPLAY := gtk
     QEMU_ACCEL := tcg
+	MKRESCUE := grub-mkrescue
 
 else
     $(error Unsupported build environment: $(UNAME_S). Use macOS, Linux, or WSL on Windows)
@@ -159,7 +161,7 @@ $(GRUB_CONFIG): $(GRUB_TEMPLATE) Makefile
 	sed 's/set default=@FB_DEFAULT@/set default=$(GRUB_DEFAULT)/' $< > $@
 
 $(ISO): $(KERNEL) $(GRUB_CONFIG)
-	grub-mkrescue -o $(ISO) $(ISO_DIR)
+	$(MKRESCUE) -o $(ISO) $(ISO_DIR)
 
 
 # 10. Clean Build Artifacts
@@ -178,7 +180,6 @@ rebuild: clean
 .PHONY: kernel iso
 kernel: $(KERNEL)
 iso: $(ISO)
-
 
 
 # 13. Run in QEMU
