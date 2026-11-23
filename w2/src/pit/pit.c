@@ -57,8 +57,7 @@ void pit_sleep_ms(u32int milliseconds) {
 }
 
 
-u32int pit_get_uptime_ms(void)
-{
+u32int pit_get_uptime_ms(void) {
     if (pit_frequency == 0)
         return 0;
 

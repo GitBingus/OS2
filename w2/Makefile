@@ -29,7 +29,6 @@ else
 endif
 
 
-
 # 2. Directory Configuration
 SRC_DIR = src
 DRIVER_DIR = drivers

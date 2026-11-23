@@ -856,7 +856,7 @@ static void about(int argc, cstring argv[]) {
     tui_newline();
     tui_write("Developed by: George Dawson\n" );
     tui_write("A small 32-bit x86 operating system kernel written in C and NASM, booted by GRUB 2 (Multiboot 1) and run in QEMU.\n");
-    tui_write("It was built for the Operating Systems 2 module at");
-    tui_write(" UWE and ends in an interactive shell with keyboard input, a timer, ");
-    tui_write("memory management and a set of self-test commands.\n");
+    tui_write("It was built for the Operating Systems 2 module at UWE.");
+    tui_write(" It features a graphical user interface, a file system, and a set of applications.");
+    tui_write("It also includes a set of self-test commands.\n");
 }

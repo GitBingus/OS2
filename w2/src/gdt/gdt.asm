@@ -11,7 +11,7 @@ lgdt_init:                  ; start of function
     mov gs, ax              ; reloads GS
     mov ss, ax              ; reloads the stack segment
 
-    jmp 0x08:.flush_cs      ; 'far jump' to flush_cs 
+    jmp 0x08:.flush_cs      ; 'far jump' to flush_cs -- a far jump is a jump to a different code segment, which is necessary to reload the code segment register (CS) after changing the GDT. This ensures that the CPU uses the new GDT settings.
 
 .flush_cs:
     ret                     ; returns to calling function

@@ -13,3 +13,5 @@ requirements.txt
 *.log
 .DS_Store
 *.txt
+*.lst
+w2\iso\boot\old\stage2_eltorito
