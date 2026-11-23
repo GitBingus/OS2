@@ -1,5 +1,5 @@
 #include "shell.h"
-#include "tui.h" 
+#include "tui.h"
 #include "kstring.h"
 #include "input.h"
 #include "types.h"
@@ -30,25 +30,27 @@ static void shell_cmd_shutdown(int argc, cstring argv[]);
 static void sleep_test(int argc, cstring argv[]);
 static void heap_test(int argc, cstring argv[]);
 static void shell_cmd_vmtest(int argc, cstring argv[]);
+static void about(int argc, cstring argv[]);
 
 static const shell_command_t commands[] = {
-    {"help",        "Show available commands, use with 'help `<command>`'",             shell_help},
-    {"clear",       "Clear the screen, use with 'clear'",                               shell_clear},
-    {"version",     "Show OS2 version, use with 'version'",                             shell_version},
-    {"keytest",     "Tests keyboard, use with 'keytest'",                               keyboard_test},
-    {"div0",        "Tests division-by-zero exception, use with 'div0'",                test_div0},
-    {"echo",        "Prints arguments, use with 'echo `options`'",                      shell_echo},
-    {"meminfo",     "Displays memory information, use with 'meminfo'",                  shell_meminfo},
-    {"memtest",     "Tests physical memory, use with 'memtest'",                        shell_cmd_memtest},
-    {"pagetest",    "Tests virtual memory mapping, use with 'pagetest'",                shell_cmd_pagetest},
-    {"pittest",     "Tests the PIT timer, use with 'pittest'",                          ticks},
-    {"shutdown",    "Shuts down the system, use with 'shutdown'",                       shell_cmd_shutdown},
-    {"sleep",       "Tests the PIT sleep function, use with 'sleep <milliseconds>'",    sleep_test},
-    {"heap",        "Tests the heap memory manager, use with 'heap'",                   heap_test},
-    {"vmtest",      "Tests the virtual memory manager, use with 'vmtest'",              shell_cmd_vmtest},
-};
+    {"help", "Show available commands, use with 'help `<command>`'", shell_help},
+    {"clear", "Clear the screen, use with 'clear'", shell_clear},
+    {"version", "Show OS2 version, use with 'version'", shell_version},
+    {"keytest", "Tests keyboard, use with 'keytest'", keyboard_test},
+    {"div0", "Tests division-by-zero exception, use with 'div0'", test_div0},
+    {"echo", "Prints arguments, use with 'echo `options`'", shell_echo},
+    {"meminfo", "Displays memory information, use with 'meminfo'", shell_meminfo},
+    {"memtest", "Tests physical memory, use with 'memtest'", shell_cmd_memtest},
+    {"pagetest", "Tests virtual memory mapping, use with 'pagetest'", shell_cmd_pagetest},
+    {"pittest", "Tests the PIT timer, use with 'pittest'", ticks},
+    {"shutdown", "Shuts down the system, use with 'shutdown'", shell_cmd_shutdown},
+    {"sleep", "Tests the PIT sleep function, use with 'sleep <milliseconds>'", sleep_test},
+    {"heap", "Tests the heap memory manager, use with 'heap'", heap_test},
+    {"vmtest", "Tests the virtual memory manager, use with 'vmtest'", shell_cmd_vmtest},
+    {"about", "Displays information about OS2, use with 'about'", about}};
 
-static void shell_cmd_vmtest(int argc, cstring argv[]) {
+static void shell_cmd_vmtest(int argc, cstring argv[])
+{
     (void)argc;
     (void)argv;
 
@@ -66,12 +68,14 @@ static void shell_cmd_vmtest(int argc, cstring argv[]) {
 
     void *warmup = vm_alloc_pages(1, test_flags);
 
-    if (warmup == 0) {
+    if (warmup == 0)
+    {
         tui_write("[FAIL] Allocator warm-up\n");
         return;
     }
 
-    if (!vm_free_pages(warmup, 1)) {
+    if (!vm_free_pages(warmup, 1))
+    {
         tui_write("[FAIL] Allocator warm-up cleanup\n");
         return;
     }
@@ -81,9 +85,12 @@ static void shell_cmd_vmtest(int argc, cstring argv[]) {
     /*
      * Test 1: zero-page allocation must fail.
      */
-    if (vm_alloc_pages(0, test_flags) == 0) {
+    if (vm_alloc_pages(0, test_flags) == 0)
+    {
         tui_write("[PASS] Zero-page allocation rejected\n");
-    } else {
+    }
+    else
+    {
         tui_write("[FAIL] Zero-page allocation rejected\n");
     }
 
@@ -92,7 +99,8 @@ static void shell_cmd_vmtest(int argc, cstring argv[]) {
      */
     void *allocation = vm_alloc_pages(page_count, test_flags);
 
-    if (allocation == 0) {
+    if (allocation == 0)
+    {
         tui_write("[FAIL] Multi-page allocation\n");
         return;
     }
@@ -107,9 +115,12 @@ static void shell_cmd_vmtest(int argc, cstring argv[]) {
     u32int frames_after_alloc = pmm_get_free_frames();
 
     if (frames_before >= page_count &&
-        frames_after_alloc == frames_before - page_count) {
+        frames_after_alloc == frames_before - page_count)
+    {
         tui_write("[PASS] Physical frame accounting\n");
-    } else {
+    }
+    else
+    {
         tui_write("[FAIL] Physical frame accounting\n");
     }
 
@@ -131,18 +142,24 @@ static void shell_cmd_vmtest(int argc, cstring argv[]) {
 
     if (*page0 == 0x11111111 &&
         *page1 == 0x22222222 &&
-        *page2 == 0x33333333) {
+        *page2 == 0x33333333)
+    {
         tui_write("[PASS] Cross-page read/write\n");
-    } else {
+    }
+    else
+    {
         tui_write("[FAIL] Cross-page read/write\n");
     }
 
     /*
      * Test 5: unaligned free must be rejected.
      */
-    if (!vm_free_pages((void *)(base + 1), 1)) {
+    if (!vm_free_pages((void *)(base + 1), 1))
+    {
         tui_write("[PASS] Unaligned free rejected\n");
-    } else {
+    }
+    else
+    {
         tui_write("[FAIL] Unaligned free rejected\n");
     }
 
@@ -151,18 +168,24 @@ static void shell_cmd_vmtest(int argc, cstring argv[]) {
      *
      * This address is immediately after the three allocated pages.
      */
-    if (!vm_free_pages((void *)(base + (page_count * PAGE_SIZE)), 1)) {
+    if (!vm_free_pages((void *)(base + (page_count * PAGE_SIZE)), 1))
+    {
         tui_write("[PASS] Invalid-range free rejected\n");
-    } else {
+    }
+    else
+    {
         tui_write("[FAIL] Invalid-range free rejected\n");
     }
 
     /*
      * Test 7: free the valid allocation.
      */
-    if (vm_free_pages(allocation, page_count)) {
+    if (vm_free_pages(allocation, page_count))
+    {
         tui_write("[PASS] Multi-page free\n");
-    } else {
+    }
+    else
+    {
         tui_write("[FAIL] Multi-page free\n");
         return;
     }
@@ -170,9 +193,12 @@ static void shell_cmd_vmtest(int argc, cstring argv[]) {
     /*
      * Test 8: double-free must be rejected.
      */
-    if (!vm_free_pages(allocation, page_count)) {
+    if (!vm_free_pages(allocation, page_count))
+    {
         tui_write("[PASS] Double free rejected\n");
-    } else {
+    }
+    else
+    {
         tui_write("[FAIL] Double free rejected\n");
     }
 
@@ -181,9 +207,12 @@ static void shell_cmd_vmtest(int argc, cstring argv[]) {
      */
     u32int frames_after_free = pmm_get_free_frames();
 
-    if (frames_after_free == frames_before) {
+    if (frames_after_free == frames_before)
+    {
         tui_write("[PASS] Physical frames reclaimed\n");
-    } else {
+    }
+    else
+    {
         tui_write("[FAIL] Physical frames reclaimed\n");
     }
 
@@ -192,20 +221,25 @@ static void shell_cmd_vmtest(int argc, cstring argv[]) {
      */
     void *reuse = vm_alloc_pages(page_count, test_flags);
 
-    if (reuse != 0) {
+    if (reuse != 0)
+    {
         tui_write("[PASS] Freed virtual range reused\n");
 
-        if (!vm_free_pages(reuse, page_count)) {
+        if (!vm_free_pages(reuse, page_count))
+        {
             tui_write("[FAIL] Reused allocation cleanup\n");
         }
-    } else {
+    }
+    else
+    {
         tui_write("[FAIL] Freed virtual range reused\n");
     }
 
     tui_write("Virtual page allocation test complete.\n");
 }
 
-static void heap_test(int argc, cstring argv[]) {
+static void heap_test(int argc, cstring argv[])
+{
     (void)argc;
     (void)argv;
 
@@ -215,31 +249,40 @@ static void heap_test(int argc, cstring argv[]) {
     u32int size = 1024; // 1 KiB
     void *ptr = kmalloc(size);
 
-    if (ptr == 0) {
+    if (ptr == 0)
+    {
         tui_write("[FAIL] Memory allocation\n");
         return;
-    } else {
+    }
+    else
+    {
         tui_write("[PASS] Memory allocation\n");
     }
 
     // Write to the allocated memory
     char *char_ptr = (char *)ptr;
-    for (u32int i = 0; i < size; i++) {
+    for (u32int i = 0; i < size; i++)
+    {
         char_ptr[i] = (char)(i % 256);
     }
 
     // Verify the written data
     bool passed = true;
-    for (u32int i = 0; i < size; i++) {
-        if (char_ptr[i] != (char)(i % 256)) {
+    for (u32int i = 0; i < size; i++)
+    {
+        if (char_ptr[i] != (char)(i % 256))
+        {
             passed = false;
             break;
         }
     }
 
-    if (passed) {
+    if (passed)
+    {
         tui_write("[PASS] Memory read/write\n");
-    } else {
+    }
+    else
+    {
         tui_write("[FAIL] Memory read/write\n");
     }
 
@@ -248,8 +291,10 @@ static void heap_test(int argc, cstring argv[]) {
     tui_write("[INFO] Memory freed\n");
 }
 
-static void sleep_test(int argc, cstring argv[]) {  
-    if (argc != 2 && argc != 3) {
+static void sleep_test(int argc, cstring argv[])
+{
+    if (argc != 2 && argc != 3)
+    {
         tui_write("Usage: sleep [-m|-s|-M|-h] <value>\n");
         tui_write("  -m: milliseconds (default)\n");
         tui_write("  -s: seconds\n");
@@ -262,38 +307,53 @@ static void sleep_test(int argc, cstring argv[]) {
     cstring duration_str;
 
     // Determine time unit and duration argument.
-    if (argc == 3) {
+    if (argc == 3)
+    {
         duration_str = argv[2];
 
-        if (kstrcmp(argv[1], "-m") == 0) {
+        if (kstrcmp(argv[1], "-m") == 0)
+        {
             multiplier = 1;
-        } else if (kstrcmp(argv[1], "-s") == 0) {
+        }
+        else if (kstrcmp(argv[1], "-s") == 0)
+        {
             multiplier = 1000;
-        } else if (kstrcmp(argv[1], "-M") == 0) {
+        }
+        else if (kstrcmp(argv[1], "-M") == 0)
+        {
             multiplier = 60000;
-        } else if (kstrcmp(argv[1], "-h") == 0) {
+        }
+        else if (kstrcmp(argv[1], "-h") == 0)
+        {
             multiplier = 3600000;
-        } else {
+        }
+        else
+        {
             tui_write("Error: Invalid time unit.\n");
             return;
         }
-    } else {
+    }
+    else
+    {
         // No flag: interpret duration as milliseconds.
         duration_str = argv[1];
     }
 
     // Validate and parse duration.
-    if (duration_str[0] == '\0') {
+    if (duration_str[0] == '\0')
+    {
         tui_write("Error: Duration is empty.\n");
         return;
     }
 
     u32int value = 0;
 
-    for (u32int i = 0; duration_str[i] != '\0'; i++) {
+    for (u32int i = 0; duration_str[i] != '\0'; i++)
+    {
         char c = duration_str[i];
 
-        if (c < '0' || c > '9') {
+        if (c < '0' || c > '9')
+        {
             tui_write("Error: Invalid duration.\n");
             return;
         }
@@ -301,7 +361,8 @@ static void sleep_test(int argc, cstring argv[]) {
         u32int digit = c - '0';
 
         // Prevent integer overflow during parsing.
-        if (value > (0xFFFFFFFFu - digit) / 10) {
+        if (value > (0xFFFFFFFFu - digit) / 10)
+        {
             tui_write("Error: Duration is too large.\n");
             return;
         }
@@ -310,7 +371,8 @@ static void sleep_test(int argc, cstring argv[]) {
     }
 
     // Prevent overflow when converting to milliseconds.
-    if (value > 0xFFFFFFFFu / multiplier) {
+    if (value > 0xFFFFFFFFu / multiplier)
+    {
         tui_write("Error: Duration is too large.\n");
         return;
     }
@@ -337,9 +399,8 @@ static void sleep_test(int argc, cstring argv[]) {
     tui_write(" milliseconds.\n");
 }
 
-
-
-static void ticks(int argc, cstring argv[]) {
+static void ticks(int argc, cstring argv[])
+{
     (void)argc;
     (void)argv;
 
@@ -359,10 +420,12 @@ static void ticks(int argc, cstring argv[]) {
     tui_write(" ms\n");
 }
 
-static void shell_cmd_shutdown(int argc, cstring argv[]) {
+static void shell_cmd_shutdown(int argc, cstring argv[])
+{
     (void)argv;
 
-    if (argc != 1) {
+    if (argc != 1)
+    {
         tui_write("Usage: shutdown\n");
         return;
     }
@@ -371,7 +434,8 @@ static void shell_cmd_shutdown(int argc, cstring argv[]) {
     system_shutdown_qemu();
 }
 
-static void shell_cmd_pagetest(int argc, cstring argv[]) {
+static void shell_cmd_pagetest(int argc, cstring argv[])
+{
     (void)argc;
     (void)argv;
 
@@ -380,7 +444,8 @@ static void shell_cmd_pagetest(int argc, cstring argv[]) {
     // Allocate a physical frame
     u32int frame = pmm_alloc_frame();
 
-    if (frame == 0) {
+    if (frame == 0)
+    {
         tui_write("[FAIL] Physical frame allocation\n");
         return;
     }
@@ -388,7 +453,8 @@ static void shell_cmd_pagetest(int argc, cstring argv[]) {
     // Map it at a virtual address outside the identity-mapped region
     u32int virtual_addr = 0x08000000;
 
-    if (!paging_map(virtual_addr, frame, PAGE_WRITABLE)) {
+    if (!paging_map(virtual_addr, frame, PAGE_WRITABLE))
+    {
         tui_write("[FAIL] Virtual memory mapping\n");
         pmm_free_frame(frame);
         return;
@@ -401,33 +467,43 @@ static void shell_cmd_pagetest(int argc, cstring argv[]) {
 
     *ptr = 0x12345678;
 
-    if (*ptr == 0x12345678) {
+    if (*ptr == 0x12345678)
+    {
         tui_write("[PASS] Virtual memory read/write\n");
-    } else {
+    }
+    else
+    {
         tui_write("[FAIL] Virtual memory read/write\n");
     }
 
     u32int physical;
 
     // Remove the mapping
-    if (paging_unmap(virtual_addr, &physical)) {
+    if (paging_unmap(virtual_addr, &physical))
+    {
         tui_write("[PASS] Virtual memory unmapping\n");
-    } else {
+    }
+    else
+    {
         tui_write("[FAIL] Virtual memory unmapping\n");
         return; // Don't free a frame that might still be mapped.
     }
 
     // Return the physical frame to the PMM
-    if (pmm_free_frame(frame)) {
+    if (pmm_free_frame(frame))
+    {
         tui_write("[PASS] Physical frame release\n");
-    } else {
+    }
+    else
+    {
         tui_write("[FAIL] Physical frame release\n");
     }
 
     tui_write("Paging test complete.\n");
 }
 
-static void shell_cmd_memtest(int argc, cstring argv[]) {
+static void shell_cmd_memtest(int argc, cstring argv[])
+{
     (void)argc;
     (void)argv;
 
@@ -442,26 +518,35 @@ static void shell_cmd_memtest(int argc, cstring argv[]) {
     bool passed = true;
 
     // Check that allocations succeeded
-    if (frame1 == 0 || frame2 == 0) {
+    if (frame1 == 0 || frame2 == 0)
+    {
         tui_write("[FAIL] Frame allocation\n");
         passed = false;
-    } else {
+    }
+    else
+    {
         tui_write("[PASS] Frame allocation\n");
     }
 
     // Check that frames are different
-    if (frame1 != 0 && frame2 != 0 && frame1 != frame2) {
+    if (frame1 != 0 && frame2 != 0 && frame1 != frame2)
+    {
         tui_write("[PASS] Unique frame addresses\n");
-    } else {
+    }
+    else
+    {
         tui_write("[FAIL] Unique frame addresses\n");
         passed = false;
     }
 
     // Check 4 KiB alignment
     if (frame1 != 0 && frame2 != 0 &&
-        frame1 % 4096 == 0 && frame2 % 4096 == 0) {
+        frame1 % 4096 == 0 && frame2 % 4096 == 0)
+    {
         tui_write("[PASS] Frame alignment\n");
-    } else {
+    }
+    else
+    {
         tui_write("[FAIL] Frame alignment\n");
         passed = false;
     }
@@ -470,16 +555,22 @@ static void shell_cmd_memtest(int argc, cstring argv[]) {
     u32int after = pmm_get_free_frames();
     u32int successful = (frame1 != 0) + (frame2 != 0);
 
-    if (before >= successful && after == before - successful) {
+    if (before >= successful && after == before - successful)
+    {
         tui_write("[PASS] Bitmap allocation tracking\n");
-    } else {
+    }
+    else
+    {
         tui_write("[FAIL] Bitmap allocation tracking\n");
         passed = false;
     }
 
-    if (passed) {
+    if (passed)
+    {
         tui_write("\nAll memory tests passed!\n");
-    } else {
+    }
+    else
+    {
         tui_write("\nMemory test failed!\n");
     }
 
@@ -492,18 +583,19 @@ static void shell_cmd_memtest(int argc, cstring argv[]) {
         pmm_free_frame(frame2);
 }
 
-void shell_meminfo(int argc, cstring argv[]) {
+void shell_meminfo(int argc, cstring argv[])
+{
     (void)argc;
     (void)argv;
 
     u32int free_frames = pmm_get_free_frames();
-    u32int total_memory = 128 * 1024 * 1024; // 128 MB
+    u32int total_memory = 128 * 1024 * 1024;                  // 128 MB
     u32int used_memory = total_memory - (free_frames * 4096); // Each frame is 4 KB
 
     char buffer[64];
 
     tui_write("Memory Information:\n");
-    
+
     uint_to_string(total_memory / (1024 * 1024), buffer);
     tui_write("Total Memory Capacity: ");
     tui_write(buffer);
@@ -520,7 +612,8 @@ void shell_meminfo(int argc, cstring argv[]) {
     tui_write(" MB\n");
 }
 
-void shell_history_add(cstring command) {
+void shell_history_add(cstring command)
+{
     if (command == 0 || command[0] == '\0')
         return;
 
@@ -552,28 +645,33 @@ void shell_history_add(cstring command) {
     history_count++;
 }
 
-cstring shell_history_get(u32int index) {
+cstring shell_history_get(u32int index)
+{
     if (index >= history_count)
         return 0;
 
     return history[index];
 }
 
-u32int shell_history_count(void) {
+u32int shell_history_count(void)
+{
     return history_count;
 }
 
-void shell_execute(string input) {
+void shell_execute(string input)
+{
     cstring argv[SHELL_MAX_ARGS];
 
     int argc = kstrsplit(input, argv, SHELL_MAX_ARGS);
 
-    if (argc == 0) return;
+    if (argc == 0)
+        return;
 
     // char buffer[12]; // Buffer to hold the string representation of the index
 
     tui_write("Command: ");
-    for (int i = 0; i < argc; i++) {
+    for (int i = 0; i < argc; i++)
+    {
         // tui_write(argv[i]);
         // tui_write(" ");
         // tui_write("index: "); // Print the index of the argument
@@ -581,13 +679,15 @@ void shell_execute(string input) {
         // tui_write(buffer);
         // tui_write(")");
 
-        if (i < argc - 1) {
+        if (i < argc - 1)
+        {
             tui_write(" ");
         }
     }
     tui_write("\n");
 
-    for (u32int i = 0; i < COMMAND_COUNT; i++) {
+    for (u32int i = 0; i < COMMAND_COUNT; i++)
+    {
         if (kstrcmp(argv[0], commands[i].name) == 0)
         {
             commands[i].handler(argc, argv);
@@ -600,7 +700,8 @@ void shell_execute(string input) {
     tui_write("\n");
 }
 
-void shell_init(void) {
+void shell_init(void)
+{
     char buffer[SHELL_BUFFER_SIZE];
 
     tui_write("Welcome to OS2!\n");
@@ -609,12 +710,11 @@ void shell_init(void) {
     {
         tui_write("> ");
 
-        input_action_t action = readline_history (
+        input_action_t action = readline_history(
             buffer,
             sizeof(buffer),
             shell_history_get,
-            shell_history_count()
-        );
+            shell_history_count());
 
         if (action == INPUT_SUBMITTED)
         {
@@ -627,11 +727,15 @@ void shell_init(void) {
     }
 }
 
-static void shell_help(int argc, cstring argv[]) {
-    if (argc > 1) {
-        for (u32int i = 0; i < COMMAND_COUNT; i++) {
+static void shell_help(int argc, cstring argv[])
+{
+    if (argc > 1)
+    {
+        for (u32int i = 0; i < COMMAND_COUNT; i++)
+        {
 
-            if (kstrcmp(argv[1], commands[i].name) == 0) {
+            if (kstrcmp(argv[1], commands[i].name) == 0)
+            {
                 tui_write(commands[i].name);
                 tui_write(" - ");
                 tui_write(commands[i].description);
@@ -650,7 +754,8 @@ static void shell_help(int argc, cstring argv[]) {
 
     u32int command_count = sizeof(commands) / sizeof(commands[0]);
 
-    for (u32int i = 0; i < command_count; i++) {
+    for (u32int i = 0; i < command_count; i++)
+    {
         tui_write("  ");
         tui_write(commands[i].name);
         tui_write(" - ");
@@ -659,65 +764,72 @@ static void shell_help(int argc, cstring argv[]) {
     }
 }
 
-static void shell_clear(int argc, cstring argv[]) {
+static void shell_clear(int argc, cstring argv[])
+{
     (void)argc;
     (void)argv;
 
     tui_clear();
 }
 
-static void shell_version(int argc, cstring argv[]) {
+static void shell_version(int argc, cstring argv[])
+{
     (void)argc;
     (void)argv;
 
     tui_write(VERSION);
 }
 
-void keyboard_test(int argc, cstring argv[]) {
+void keyboard_test(int argc, cstring argv[])
+{
     (void)argc;
     (void)argv;
 
     char buffer[SHELL_BUFFER];
     tui_write("Press keys to see their scancodes. Press ESC to exit.\n");
-    
-    for (;;) {
+
+    for (;;)
+    {
         readline(buffer, SHELL_BUFFER);
-        
-        if (kstrcmp(buffer, "ESC") == 0) {
+
+        if (kstrcmp(buffer, "ESC") == 0)
+        {
             tui_write("Exiting keyboard test...\n");
             break;
         }
-        
+
         tui_write("Scancode: ");
         tui_write(buffer);
         tui_write("\n");
     }
 }
 
-void test_div0(int argc, cstring argv[]) {
+void test_div0(int argc, cstring argv[])
+{
     (void)argc;
     (void)argv;
-    
+
     tui_write("Testing division-by-zero exception...\n");
-    
-    __asm__ volatile (
+
+    __asm__ volatile(
         "movl $10, %%eax\n\t"
         "xorl %%edx, %%edx\n\t"
         "xorl %%ecx, %%ecx\n\t"
         "divl %%ecx"
         :
         :
-        : "eax", "ecx", "edx", "cc"
-    );
-    
+        : "eax", "ecx", "edx", "cc");
+
     tui_write("This should never print!\n");
 }
 
-static void shell_echo(int argc, cstring argv[]) {
+static void shell_echo(int argc, cstring argv[])
+{
     bool newline = true;
     int start = 1;
 
-    if (argc > 1 && kstrcmp(argv[1], "-n") == 0) {
+    if (argc > 1 && kstrcmp(argv[1], "-n") == 0)
+    {
         newline = false;
         start = 2;
     }
@@ -732,4 +844,19 @@ static void shell_echo(int argc, cstring argv[]) {
 
     if (newline)
         tui_newline();
+}
+
+static void about(int argc, cstring argv[]) {
+    (void)argc;
+    (void)argv;
+
+    tui_write("OS2 - A simple operating system kernel\n");
+    tui_write("Version: ");
+    tui_write(VERSION);
+    tui_newline();
+    tui_write("Developed by: George Dawson\n" );
+    tui_write("A small 32-bit x86 operating system kernel written in C and NASM, booted by GRUB 2 (Multiboot 1) and run in QEMU.\n");
+    tui_write("It was built for the Operating Systems 2 module at");
+    tui_write(" UWE and ends in an interactive shell with keyboard input, a timer, ");
+    tui_write("memory management and a set of self-test commands.\n");
 }

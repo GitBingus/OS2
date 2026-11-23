@@ -3,6 +3,8 @@
 
 static unsigned short tui_cursor = 0;
 
+static int string_start = 0;
+
 void tui_init(void) {   // init tui
     tui_cursor = 0;
     fb_clear(FB_BLACK);
@@ -27,11 +29,19 @@ void tui_putchar(char c) {
 
 }
 
+// if (string-start > 0 && max_col == current_col) then wrap the word to the next line, otherwise just print the character
+
 void tui_write(cstring str) {
-    while (*str != '\0')
-    {
+    while (*str != '\0') {
+        if ((string_start > 0) && (tui_cursor % SCREEN_WIDTH == SCREEN_WIDTH - 1)) {
+            tui_newline();
+            string_start = 0;
+            tui_newline();
+            tui_newline();
+        }
         tui_putchar(*str);
         str++;
+        string_start++;
     }
 }
 
