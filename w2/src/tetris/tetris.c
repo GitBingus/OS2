@@ -67,6 +67,18 @@ void show_play_prompt(void) {
     }
 }
 
+void tetris_board_clear(tetris_board_t *board, unsigned int y){
+    for (int xx = 0; xx <= WIDTH; xx++) {
+        board->cells[xx][y] = EMPTY_CELL;
+    }
+}
+
+void tetris_board_init(tetris_board_t *board) {
+    for (unsigned int y = 0; y < HEIGHT; y++) {
+        tetris_board_clear(board, y);
+    }
+}
+
 void tetris_init(void) {
     fb_cursor_disable();
     fb_clear(FB_BLACK);
@@ -76,5 +88,7 @@ void tetris_init(void) {
     show_play_prompt();
     tetris_wait_for_start();
 
-    fb_clear(FB_BLACK);
+    tetris_board_t Board;
+
+    tetris_board_init(&Board);
 }

@@ -18,7 +18,6 @@ Milestone	Objective
 */
 
 #include "keyboard.h"
-#include "fb.h"
 #include "tui.h"
 
 #include "tetrominoes.h"
@@ -33,8 +32,10 @@ Milestone	Objective
 #define HARD_DROP           KEY_ENTER       // hard drop -- place piece immediately
 #define EXIT                KEY_BACKSPACE   // exit game
 
+#define EMPTY_CELL 0xFF
+
 typedef struct {
-    VGAColours cells[WIDTH][HEIGHT];
+    unsigned char cells[HEIGHT][WIDTH];
 } tetris_board_t;
 
 typedef struct {
@@ -42,6 +43,10 @@ typedef struct {
 } tetris_splashscreen_t;
 
 void tetris_init(void);
+void tetris_board_init(tetris_board_t *board);
+bool tetris_board_is_full(const tetris_board_t *board, unsigned int y);
+void tetris_board_clear(tetris_board_t *board, unsigned int y);
+
 
 static const tetris_splashscreen_t tetris_splashscreen = {
     .tiles  = {
