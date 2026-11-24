@@ -9,6 +9,7 @@
 #include "paging.h"
 #include "pit.h"
 #include "heap.h"
+#include "tetrominoes.h"
 
 /*
     Kernel panic: display an error and halt.
@@ -16,6 +17,19 @@
     Interrupts are disabled to prevent hardware IRQs
     from continuing after a fatal error.
 */
+
+void tetromino_debug(const tetromino_t *tetromino) {
+    for (int y = 0; y < 4; y++) {
+        for (int x = 0; x < 4; x++) {
+            if (tetromino->tiles[y][x]) {
+                tui_write("[]");
+            } else {
+                tui_write("  ");
+            }
+        }
+        tui_write("\n");
+    }
+}
 
 static void kernel_panic(const char *message) {
     __asm__ volatile("cli");
@@ -90,6 +104,15 @@ void kmain(u32int ebx) {
     __asm__ volatile("sti");
 
     tui_write("[OK] PIT and keyboard interrupts enabled\n");
+
+    // tui_write("Testing tetrominoes:\n");
+    // tetromino_debug(&tetrominoes[TETROMINO_TYPE_I]);
+    // tetromino_debug(&tetrominoes[TETROMINO_TYPE_O]);
+    // tetromino_debug(&tetrominoes[TETROMINO_TYPE_J]);
+    // tetromino_debug(&tetrominoes[TETROMINO_TYPE_L]);
+    // tetromino_debug(&tetrominoes[TETROMINO_TYPE_Z]);
+    // tetromino_debug(&tetrominoes[TETROMINO_TYPE_S]);
+    // tetromino_debug(&tetrominoes[TETROMINO_TYPE_T]);
 
     shell_init();
 

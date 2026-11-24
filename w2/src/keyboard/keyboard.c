@@ -58,8 +58,7 @@ static keyboard_event_t keyboard_no_event(void)
 
 
 // Process a single scancode
-keyboard_event_t keyboard_process_scancode(unsigned char scan_code)
-{
+keyboard_event_t keyboard_process_scancode(unsigned char scan_code) {
     keyboard_event_t event = keyboard_no_event();
 
     // Extended key prefix

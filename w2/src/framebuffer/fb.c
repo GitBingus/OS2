@@ -35,3 +35,16 @@ void fb_move_cursor(unsigned short pos) {
     outb(FB_COMMAND_PORT, FB_LOW_BYTE_COMMAND);
     outb(FB_DATA_PORT,    pos & 0x00FF);
 }
+
+void fb_cursor_enable(void) {
+    outb(VGA_CRTC_INDEX, 0x0A);
+    outb(VGA_CRTC_DATA, 0x00);
+
+    outb(VGA_CRTC_INDEX, 0x0B);
+    outb(VGA_CRTC_DATA, 0x0F);
+}
+
+void fb_cursor_disable(void) {
+    outb(VGA_CRTC_INDEX, 0x0A);
+    outb(VGA_CRTC_DATA, 0x20);
+}

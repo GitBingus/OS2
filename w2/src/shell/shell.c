@@ -8,6 +8,7 @@
 #include "power.h"
 #include "pit.h"
 #include "heap.h"
+#include "tetris.h"
 
 #define SHELL_BUFFER 128
 #define SHELL_MAX_ARGS 16
@@ -32,6 +33,8 @@ static void heap_test(int argc, cstring argv[]);
 static void shell_cmd_vmtest(int argc, cstring argv[]);
 static void about(int argc, cstring argv[]);
 
+static void tetris(int argc, cstring argv[]);
+
 static const shell_command_t commands[] = {
     {"help", "Show available commands, use with 'help `<command>`'", shell_help},
     {"clear", "Clear the screen, use with 'clear'", shell_clear},
@@ -47,10 +50,18 @@ static const shell_command_t commands[] = {
     {"sleep", "Tests the PIT sleep function, use with 'sleep <milliseconds>'", sleep_test},
     {"heap", "Tests the heap memory manager, use with 'heap'", heap_test},
     {"vmtest", "Tests the virtual memory manager, use with 'vmtest'", shell_cmd_vmtest},
-    {"about", "Displays information about OS2, use with 'about'", about}};
+    {"about", "Displays information about OS2, use with 'about'", about},
+    {"tetris", "Starts TETRIS", tetris}
+};
 
-static void shell_cmd_vmtest(int argc, cstring argv[])
-{
+static void tetris(int argc, cstring argv[]) {
+    (void)argc;
+    (void)argv;
+
+    tetris_init();
+}
+
+static void shell_cmd_vmtest(int argc, cstring argv[]) {
     (void)argc;
     (void)argv;
 

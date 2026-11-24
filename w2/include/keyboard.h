@@ -182,9 +182,6 @@ keyboard_event_t keyboard_poll(void);
 
 u32int keyboard_get_scancode_log(u8int *buffer, u32int max_count);
 
-// Constantly monitors kb
-void monitor_kb(void);
-
 bool keyboard_dequeue(keyboard_event_t *event);
 void keyboard_irq_handler(void);
 

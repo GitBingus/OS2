@@ -14,6 +14,9 @@
 #define FB_HIGH_BYTE_COMMAND    14
 #define FB_LOW_BYTE_COMMAND     15
 
+#define VGA_CRTC_INDEX FB_COMMAND_PORT
+#define VGA_CRTC_DATA  FB_DATA_PORT
+
 /* VGA colour values */
 #define FB_BLACK       0
 #define FB_GREEN       2
@@ -66,5 +69,8 @@ extern const unsigned short screen_size;
 void fb_move_cursor(unsigned short pos);
 void fb_clear(unsigned char background);
 void fb_write_cell(unsigned int i, char c, unsigned char fg, unsigned char bg);
+
+void fb_cursor_enable(void);
+void fb_cursor_disable(void);
 
 #endif
