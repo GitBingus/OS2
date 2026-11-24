@@ -6,13 +6,7 @@ VIDEO_MODE equ 0x00000004               ; defines video mode
 FLAGS equ ALIGN_MODULES | VIDEO_MODE
 CHECKSUM equ -(MAGIC_NUMBER + FLAGS)    ; calculates checksum
 
-dd 0       ; Linear graphics mode
-dd 320     ; Width
-dd 200     ; Height
-dd 8       ; Bits per pixel
-
 KERNEL_STACK_SIZE equ 4096      ; defines the size of the kernel stack in bytes
-
 extern kmain                    ; declares the external C kernel entry point
 
 section .bss                
@@ -25,6 +19,18 @@ section .text
     dd MAGIC_NUMBER             ; defines the magic number for the multiboot header
     dd FLAGS                    ; defines the flags for the multiboot header
     dd CHECKSUM                 ; defines the checksum for the multiboot header
+
+    ; Address fields (not used)
+    dd 0                        ; header_addr
+    dd 0                        ; load_addr
+    dd 0                        ; load_end_addr
+    dd 0                        ; bss_end_addr
+    dd 0                        ; entry_addr
+
+    dd 0                        ; Linear graphics mode
+    dd 320                      ; Width
+    dd 200                      ; Height
+    dd 8                        ; Bits per pixel
 
 loader:
     mov esp, kernel_stack + KERNEL_STACK_SIZE   ; sets the stack pointer to the top of the kernel stack

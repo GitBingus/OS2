@@ -27,6 +27,10 @@ void graphics_init(multiboot_info_t *mb_info) {
     u8int   framebuffer_type    = mb_info->framebuffer_type;
     u64int  framebuffer_size    = (u64int)framebuffer_pitch * framebuffer_height;
 
+    if (framebuffer_bpp != 8) return; // Only support 8 bits per pixel (indexed color)
+    if (framebuffer_type != MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED) return; // Only support indexed color
+    if (framebuffer_pitch < framebuffer_width) return; // Invalid pitch (should be at least as wide as the framebuffer width)
+
     if (framebuffer_addr > 0xFFFFFFFFULL) return; // Framebuffer address exceeds 32-bit limit
 
     if (framebuffer_size == 0 ||
@@ -76,4 +80,24 @@ void graphics_init(multiboot_info_t *mb_info) {
 
     framebuffer.bpp = framebuffer_bpp;
     framebuffer.type = framebuffer_type;
+}
+
+void graphics_clear(u8int colour) {
+    for (u32int y = 0; y < framebuffer.height; y++) {
+        for (u32int x = 0; x < framebuffer.width; x++) {
+            graphics_putpixel(x, y, colour);
+        }
+    }
+}
+
+void graphics_putpixel(
+    unsigned int x,
+    unsigned int y,
+    unsigned int colour
+) {
+    if (framebuffer.pixels == 0) return; // check if fb was initialised
+    if (x >= framebuffer.width || y >= framebuffer.height) return; // check fb is not out of bounds / coords
+
+    u32int offset = (y * framebuffer.pitch) + x; // calculate offset - pos in fb memory
+    framebuffer.pixels[offset] = (u8int)colour; // write the colour to fb memory
 }

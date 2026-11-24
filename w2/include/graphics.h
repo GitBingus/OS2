@@ -4,6 +4,7 @@
 #include "multiboot.h"
 #include "types.h"
 #include "paging.h"
+#include "pmm.h"
 
 #define GRAPHICS_WIDTH  320
 #define GRAPHICS_HEIGHT 200
@@ -37,5 +38,13 @@ void graphics_draw_rect(
     unsigned int height,
     unsigned int colour
 );
+
+void graphics_putpixel(
+    unsigned int x,
+    unsigned int y,
+    unsigned int colour
+);
+
+void graphics_clear(u8int colour);
 
 #endif

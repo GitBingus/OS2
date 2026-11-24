@@ -10,6 +10,7 @@
 #include "pit.h"
 #include "heap.h"
 #include "tetrominoes.h"
+#include "graphics.h"
 
 /*
     Kernel panic: display an error and halt.
@@ -95,6 +96,11 @@ void kmain(u32int ebx) {
 
     tui_write("[OK] Heap memory manager\n");
     tui_write("[OK] Paging enabled\n");
+
+    // Initialise graphics
+    graphics_init(mb_info);
+
+    tui_write("[OK] Graphics enabled\n");
 
     pit_init(PIT_DEFAULT_FREQUENCY);
 

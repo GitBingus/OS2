@@ -13,7 +13,6 @@ static u8int pmm_allocated_bitmap[PMM_MAX_FRAMES / 8];
 static void pmm_set_frame(u32int frame);
 static void pmm_clear_frame(u32int frame);
 static bool pmm_test_frame(u32int frame);
-static void pmm_mark_region_used(u64int base, u64int length);
 u32int pmm_get_free_frames(void);
 u32int pmm_alloc_frame(void);
 bool pmm_free_frame(u32int address);
@@ -94,7 +93,7 @@ static bool pmm_test_frame(u32int frame) {
     return (pmm_bitmap[byte_index] & (1u << bit_index)) != 0;
 }
 
-static void pmm_mark_region_used(u64int base, u64int length) {
+void pmm_mark_region_used(u64int base, u64int length) {
     // Ignore empty or completely unsupported regions
     if (length == 0 || base >= PMM_MAX_MEMORY)
         return;
