@@ -77,7 +77,7 @@ void tetris_board_clear(tetris_board_t *board, unsigned int y) {
 }
 
 // checks the entire board, finds completed rows, removes them and shifts the rows above down
-static u32int tetris_board_clear_lines(tetris_board_t *board) {
+u32int tetris_board_clear_lines(tetris_board_t *board) {
     u32int lines_cleared = 0;
     int y = HEIGHT - 1;
 

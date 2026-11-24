@@ -45,8 +45,9 @@ typedef struct {
 
 void tetris_init(void);
 void tetris_board_init(tetris_board_t *board);
-u32int tetris_board_full(const tetris_board_t *board, unsigned int y);
+bool tetris_board_full(const tetris_board_t *board, unsigned int y);
 void tetris_board_clear(tetris_board_t *board, unsigned int y);
+u32int tetris_board_clear_lines(tetris_board_t *board);
 
 
 static const tetris_splashscreen_t tetris_splashscreen = {
