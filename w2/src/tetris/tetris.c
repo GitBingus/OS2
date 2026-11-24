@@ -122,9 +122,104 @@ bool tetris_board_full(const tetris_board_t *board, unsigned int y) {
 
 void tetris_board_init(tetris_board_t *board) {
     for (unsigned int y = 0; y < HEIGHT; y++) {
-        tetris_board_clear(board, y);
+        for (unsigned int x = 0; x < WIDTH; x++) {
+            board->cells[y][x] = EMPTY_CELL;
+        }
     }
 }
+
+void tetris_board_render(const tetris_board_t *board) {
+    /*
+        Iterate through every row.
+        Iterate through every column.
+        Read the cell's value.
+        Determine its colour.
+        Calculate its framebuffer position.
+        Draw the block.
+    */
+
+    (void)(board);
+
+    for (int y = 0; y < HEIGHT; y++) {
+        for (u32int x = 0; x < WIDTH; x++) {
+            unsigned int screen_x = BOARD_START_X + (x * 2);
+            unsigned int screen_y = BOARD_START_Y + y;
+
+            unsigned int cursor = (screen_y * SCREEN_WIDTH) + screen_x;
+            unsigned char colour = board->cells[y][x];
+
+            if (colour == EMPTY_CELL) {
+                fb_write_cell(cursor,     ' ', COLOUR.WHITE, COLOUR.BLACK);
+                fb_write_cell(cursor + 1, ' ', COLOUR.WHITE, COLOUR.BLACK);
+            } else {
+                fb_write_cell(cursor,     0xFE, colour, COLOUR.BLACK);
+                fb_write_cell(cursor + 1, 0xFE, colour, COLOUR.BLACK);
+            }
+        }
+    }
+}
+
+void tetris_board_render_border(void) {
+    unsigned int left   = BOARD_START_X - 1;
+    unsigned int right  = BOARD_START_X + BOARD_SCREEN_WIDTH;
+    unsigned int top    = BOARD_START_Y - 1;
+    unsigned int bottom = BOARD_START_Y + HEIGHT;
+
+    // draw horizontal lines
+    for (unsigned int x = left + 1; x < right; x++) {
+        fb_write_cell((top * SCREEN_WIDTH) + x, 196, COLOUR.WHITE, COLOUR.BLACK);
+        fb_write_cell((bottom * SCREEN_WIDTH) + x, 196, COLOUR.WHITE, COLOUR.BLACK);
+    }
+
+    // draw vertical lines
+    for (unsigned int y = top + 1; y < bottom; y++) {
+        fb_write_cell((y * SCREEN_WIDTH) + left, 179, COLOUR.WHITE, COLOUR.BLACK);
+        fb_write_cell((y * SCREEN_WIDTH) + right, 179, COLOUR.WHITE, COLOUR.BLACK);
+    }
+
+    // draw corners
+    fb_write_cell((top * SCREEN_WIDTH) + left, 218, COLOUR.WHITE, COLOUR.BLACK);
+    fb_write_cell((top * SCREEN_WIDTH) + right, 191, COLOUR.WHITE, COLOUR.BLACK);
+    fb_write_cell((bottom * SCREEN_WIDTH) + left, 192, COLOUR.WHITE, COLOUR.BLACK);
+    fb_write_cell((bottom * SCREEN_WIDTH) + right, 217, COLOUR.WHITE, COLOUR.BLACK);
+}
+
+
+void tetris_piece_render(const tetris_piece_t *piece) {
+    const tetromino_t *ttm = &tetrominoes[piece->type];
+    unsigned char colour = ttm->colour;
+
+    for (int y = 0; y < 4; y++) {
+        for (int x = 0; x < 4; x++) {
+
+            unsigned char tile = ttm->tiles[y][x];
+
+            if (tile == 1) {
+                unsigned int screen_x =
+                    BOARD_START_X + ((piece->x + x) * 2);
+
+                unsigned int screen_y =
+                    BOARD_START_Y + piece->y + y;
+
+                unsigned int cursor =
+                    (screen_y * SCREEN_WIDTH) + screen_x;
+
+                fb_write_cell(cursor,     0xFE, colour, COLOUR.BLACK);
+                fb_write_cell(cursor + 1, 0xFE, colour, COLOUR.BLACK);
+            }
+        }
+    }
+}
+
+
+void tetris_board_load_mosaic(tetris_board_t *board) {
+    for (unsigned int y = 0; y < HEIGHT; y++) {
+        for (unsigned int x = 0; x < WIDTH; x++) {
+            board->cells[y][x] = TETRIS_MOSAIC[y][x];
+        }
+    }
+}
+
 
 void tetris_init(void) {
     fb_cursor_disable();
@@ -134,8 +229,21 @@ void tetris_init(void) {
     
     show_play_prompt();
     tetris_wait_for_start();
-    
+
+    fb_clear(FB_BLACK);
+
     tetris_board_t Board;
-    
+
+    tui_write("Generating mosaic...");
     tetris_board_init(&Board);
+
+    fb_clear(FB_BLACK);
+    tetris_board_load_mosaic(&Board);
+
+    tetris_board_render(&Board);
+    tetris_board_render_border();
+
+    while (1) {
+        
+    }
 }

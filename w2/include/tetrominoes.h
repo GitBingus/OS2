@@ -16,13 +16,13 @@ typedef enum {
 
 
 typedef struct {
-    VGAColours colour;
+    unsigned char colour;
     unsigned char tiles[4][4];
 } tetromino_t;
 
 
 static const tetromino_t TETROMINO_O = {
-    .colour      =  {COLOUR.YELLOW},
+    .colour      =  COLOUR.YELLOW,
     .tiles       =  {
                         {0, 1, 1, 0},
                         {0, 1, 1, 0},
@@ -32,7 +32,7 @@ static const tetromino_t TETROMINO_O = {
 };
 
 static const tetromino_t TETROMINO_I = {
-    .colour      =  {COLOUR.RED},
+    .colour      =  COLOUR.RED,
     .tiles       =  {
                         {1, 0, 0, 0},
                         {1, 0, 0, 0},
@@ -42,7 +42,7 @@ static const tetromino_t TETROMINO_I = {
 };
 
 static const tetromino_t TETROMINO_S = {
-    .colour      =  {COLOUR.RED},
+    .colour      =  COLOUR.RED,
     .tiles       =  {
                         {0, 1, 1, 0},
                         {1, 1, 0, 0},
@@ -52,7 +52,7 @@ static const tetromino_t TETROMINO_S = {
 };
 
 static const tetromino_t TETROMINO_Z = {
-    .colour      =  {COLOUR.GREEN},
+    .colour      =  COLOUR.GREEN,
     .tiles       =  {
                         {1, 1, 0, 0},
                         {0, 1, 1, 0},
@@ -62,7 +62,7 @@ static const tetromino_t TETROMINO_Z = {
 };
 
 static const tetromino_t TETROMINO_L = {
-    .colour      =  {COLOUR.BROWN},
+    .colour      =  COLOUR.BROWN,
     .tiles       =  {
                         {1, 0, 0, 0},
                         {1, 0, 0, 0},
@@ -72,7 +72,7 @@ static const tetromino_t TETROMINO_L = {
 };
 
 static const tetromino_t TETROMINO_J = {
-    .colour      =  {COLOUR.LIGHT_MAGENTA},
+    .colour      =  COLOUR.LIGHT_MAGENTA,
     .tiles       =  {
                         {0, 1, 0, 0},
                         {0, 1, 0, 0},
@@ -82,7 +82,7 @@ static const tetromino_t TETROMINO_J = {
 };
 
 static const tetromino_t TETROMINO_T = {
-    .colour      =  {COLOUR.MAGENTA},
+    .colour      =  COLOUR.MAGENTA,
     .tiles       =  {
                         {1, 1, 1, 0},
                         {0, 1, 0, 0},
@@ -101,11 +101,5 @@ static const tetromino_t tetrominoes[7] = {
     [TETROMINO_TYPE_J] = TETROMINO_J,
     [TETROMINO_TYPE_L] = TETROMINO_L
 };
-
-typedef struct {
-    tetromino_type_t type;
-    int x;
-    int y;
-} active_tetromino_t;
 
 #endif
