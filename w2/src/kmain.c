@@ -11,6 +11,8 @@
 #include "heap.h"
 #include "tetrominoes.h"
 #include "graphics.h"
+#include "display.h"
+#include "font.h"
 
 /*
     Kernel panic: display an error and halt.
@@ -98,14 +100,25 @@ void kmain(u32int ebx) {
     tui_write("[OK] Paging enabled\n");
 
     // Initialise graphics
-    graphics_init(mb_info);
-    graphics_rgb_test();
+    if (!(graphics_init(mb_info))) {
+        kernel_panic("UH OH! GPU NO WORK");
+    }
+
+    display_init(DISPLAY_MODE_GRAPHICS);
+
+    if (!(display_is_initialised())) kernel_panic("Display not initialised!!!!");
+
     tui_write("[OK] Graphics enabled\n");
 
     pit_init(PIT_DEFAULT_FREQUENCY);
 
     pic_unmask_irq(0); // enable PIT
     pic_unmask_irq(1); // enabled keyboard
+
+    font_init();
+    tui_write("[OK] Font initialised\n");
+
+    graphics_clear(0, 0, 0);
 
     __asm__ volatile("sti");
 

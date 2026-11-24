@@ -2,7 +2,7 @@
 
 static graphics_framebuffer_t framebuffer;
 
-void graphics_init(multiboot_info_t *mb_info) {
+bool graphics_init(multiboot_info_t *mb_info) {
     /*
         Check that GRUB supplied framebuffer information
         Retrieve the framebuffer address
@@ -14,7 +14,7 @@ void graphics_init(multiboot_info_t *mb_info) {
 
     // Validate Multiboot information
     if (mb_info == 0 || (!(mb_info->flags & (1 << 12)))) {
-        return;
+        return false;
     }
 
     //  Retrieve framebuffer information from Multiboot structure
@@ -27,23 +27,23 @@ void graphics_init(multiboot_info_t *mb_info) {
     u8int   framebuffer_type    = mb_info->framebuffer_type;
     u64int  framebuffer_size    = (u64int)framebuffer_pitch * framebuffer_height;
 
-    if (framebuffer_bpp != 32) return; // Only support 32 bits per pixel (RGB)
-    if (framebuffer_type != MULTIBOOT_FRAMEBUFFER_TYPE_RGB) return; // Only support RGB
-    if (framebuffer_pitch < framebuffer_width) return; // Invalid pitch (should be at least as wide as the framebuffer width)
+    if (framebuffer_bpp != 32) return false; // Only support 32 bits per pixel (RGB)
+    if (framebuffer_type != MULTIBOOT_FRAMEBUFFER_TYPE_RGB) return false; // Only support RGB
+    if (framebuffer_pitch < framebuffer_width * 4) return false; // Invalid pitch (should be at least as wide as the framebuffer width)
 
-    if (framebuffer_addr > 0xFFFFFFFFULL) return; // Framebuffer address exceeds 32-bit limit
+    if (framebuffer_addr > 0xFFFFFFFFULL) return false; // Framebuffer address exceeds 32-bit limit
 
     if (framebuffer_size == 0 ||
         framebuffer_size > 0x100000000ULL - framebuffer_addr) {
-        return; // Framebuffer size is zero or exceeds 32-bit limit
+        return false; // Framebuffer size is zero or exceeds 32-bit limit
     }
 
-    if (framebuffer_width == 0 || framebuffer_height == 0) return; // Framebuffer dimensions are invalid
-    if (framebuffer_pitch == 0) return; // Framebuffer pitch is invalid
+    if (framebuffer_width == 0 || framebuffer_height == 0) return false; // Framebuffer dimensions are invalid
+    if (framebuffer_pitch == 0) return false; // Framebuffer pitch is invalid
 
     u64int page_start = framebuffer_addr & ~(u64int)(PAGE_SIZE - 1);
     u64int framebuffer_end = framebuffer_addr + framebuffer_size;
-    if (framebuffer_end > 0x100000000ULL - (PAGE_SIZE - 1)) return; // Framebuffer end address exceeds 32-bit limit
+    if (framebuffer_end > 0x100000000ULL - (PAGE_SIZE - 1)) return false; // Framebuffer end address exceeds 32-bit limit
     if (mb_info->flags & MULTIBOOT_INFO_FRAMEBUFFER_INFO) { // Check if framebuffer info is available
         u64int framebuffer_size = 
             (u64int)mb_info->framebuffer_pitch *
@@ -66,7 +66,7 @@ void graphics_init(multiboot_info_t *mb_info) {
             (u32int)page,
             PAGE_PRESENT | PAGE_WRITABLE
         )) {
-            return;
+            return false;
         }
     }
 
@@ -87,6 +87,8 @@ void graphics_init(multiboot_info_t *mb_info) {
 
     framebuffer.blue_position = mb_info->framebuffer_blue_field_position;
     framebuffer.blue_mask_size = mb_info->framebuffer_blue_mask_size;
+
+    return true;
 }
 
 void graphics_clear(u8int red, u8int green, u8int blue) {

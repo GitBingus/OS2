@@ -1,8 +1,8 @@
 #include "io.h"
 #include "fb.h"
 
-const unsigned char foreground = 0x0F;
-const unsigned char background = 0x00;
+unsigned char foreground = 0x0F;
+unsigned char background = 0x00;
 unsigned char attribute = FB_COLOUR(0x0F, 0x00);
 const unsigned short screen_size = SCREEN_WIDTH * SCREEN_HEIGHT;
 
