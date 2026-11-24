@@ -19,6 +19,7 @@ Milestone	Objective
 
 #include "keyboard.h"
 #include "tui.h"
+#include "types.h"
 
 #include "tetrominoes.h"
 
@@ -44,7 +45,7 @@ typedef struct {
 
 void tetris_init(void);
 void tetris_board_init(tetris_board_t *board);
-bool tetris_board_is_full(const tetris_board_t *board, unsigned int y);
+u32int tetris_board_full(const tetris_board_t *board, unsigned int y);
 void tetris_board_clear(tetris_board_t *board, unsigned int y);
 
 
