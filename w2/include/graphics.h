@@ -4,6 +4,8 @@
 #include "multiboot.h"
 #include "types.h"
 #include "paging.h"
+#include "kstring.h"
+#include "tui.h"
 #include "pmm.h"
 
 #define GRAPHICS_WIDTH  320
@@ -13,13 +15,7 @@
 #define GP_PAGE_SIZE PAGE_SIZE
 
 void graphics_init(multiboot_info_t *mb_info);
-void graphics_clear(unsigned int colour);
-
-void graphics_putpixel(
-    unsigned int x,
-    unsigned int y,
-    unsigned int colour
-);
+void graphics_palette_test(void);
 
 typedef struct {
     unsigned int physical_address;  // where the fb stores the memory
@@ -31,14 +27,6 @@ typedef struct {
     unsigned char type;             // fb colour organisation
 } graphics_framebuffer_t;
 
-void graphics_draw_rect(
-    unsigned int x,
-    unsigned int y,
-    unsigned int width,
-    unsigned int height,
-    unsigned int colour
-);
-
 void graphics_putpixel(
     unsigned int x,
     unsigned int y,
@@ -46,5 +34,13 @@ void graphics_putpixel(
 );
 
 void graphics_clear(u8int colour);
+
+void graphics_draw_rect(
+    u32int x,
+    u32int y,
+    u32int width,
+    u32int height,
+    u8int colour
+);
 
 #endif

@@ -80,12 +80,42 @@ void graphics_init(multiboot_info_t *mb_info) {
 
     framebuffer.bpp = framebuffer_bpp;
     framebuffer.type = framebuffer_type;
+
+    graphics_palette_test();
 }
 
 void graphics_clear(u8int colour) {
     for (u32int y = 0; y < framebuffer.height; y++) {
         for (u32int x = 0; x < framebuffer.width; x++) {
             graphics_putpixel(x, y, colour);
+        }
+    }
+}
+
+void graphics_palette_test(void) {
+    graphics_clear(0);
+
+    // Calculate the dimensions of each palette square.
+    u32int cell_width = framebuffer.width / 16;
+    u32int cell_height = framebuffer.height / 16;
+
+    if (cell_width == 0 || cell_height == 0) return;
+
+    // Draw all 256 palette entries.
+    for (u32int y = 0; y < 16; y++) {
+        for (u32int x = 0; x < 16; x++) {
+
+            // Calculate the palette index.
+            u8int colour = (u8int)((y * 16) + x);
+
+            // Draw the colour square, leaving a 1-pixel gap.
+            graphics_draw_rect(
+                x * cell_width,
+                y * cell_height,
+                cell_width - 1,
+                cell_height - 1,
+                colour
+            );
         }
     }
 }
@@ -100,4 +130,22 @@ void graphics_putpixel(
 
     u32int offset = (y * framebuffer.pitch) + x; // calculate offset - pos in fb memory
     framebuffer.pixels[offset] = (u8int)colour; // write the colour to fb memory
+}
+
+void graphics_draw_rect(
+    u32int x,
+    u32int y,
+    u32int width,
+    u32int height,
+    u8int colour
+){
+    if (x >= framebuffer.width || y >= framebuffer.height) return;
+    if (width > framebuffer.width - x) width = framebuffer.width - x;
+    if (height > framebuffer.height - y) height = framebuffer.height - y;
+
+    for (u32int py = 0; py < height; py++) {
+        for (u32int px = 0; px < width; px++) {
+            graphics_putpixel(x + px, y + py, colour);
+        }
+    }
 }
