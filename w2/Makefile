@@ -51,6 +51,7 @@ POWER_DIR = $(SRC_DIR)/power
 ACPI_DIR = $(SRC_DIR)/acpi
 PIT_DIR = $(SRC_DIR)/pit
 TETRIS_DIR = $(SRC_DIR)/tetris
+GRAPHICS_DIR = $(SRC_DIR)/framebuffer
 GRUB_TEMPLATE = $(GRUB_DIR)/grub.cfg.in
 GRUB_CONFIG = $(GRUB_DIR)/grub.cfg
 
@@ -82,6 +83,7 @@ PMM_SRC = $(MEM_DIR)/pmm.c
 PAGING_SRC = $(MEM_DIR)/paging.c
 POWER_SRC = $(POWER_DIR)/power.c
 TETRIS_SRC = $(TETRIS_DIR)/tetris.c
+GRAPHICS_SRC = $(GRAPHICS_DIR)/graphics.c
 # ACPI_SRC = $(ACPI_DIR)/acpi.c
 # TABLES_SRC = $(ACPI_DIR)/tables.c
 PIT_SRC = $(PIT_DIR)/pit.c
@@ -111,6 +113,7 @@ PMM_OBJ = $(MEM_DIR)/pmm.o
 PAGING_OBJ = $(MEM_DIR)/paging.o
 POWER_OBJ = $(POWER_DIR)/power.o
 TETRIS_OBJ = $(TETRIS_DIR)/tetris.o
+GRAPHICS_OBJ = $(GRAPHICS_DIR)/graphics.o
 # ACPI_OBJ = $(ACPI_DIR)/acpi.o
 # TABLES_OBJ = $(ACPI_DIR)/tables.o
 PIT_OBJ = $(PIT_DIR)/pit.o
@@ -118,7 +121,7 @@ HEAP_OBJ = $(MEM_DIR)/heap.o
 
 C_OBJECTS = $(C_OBJ) $(IO_OBJ) $(TUI_OBJ) $(FB_OBJ) $(GDT_C_OBJ) $(KB_OBJ) $(KSTRING_OBJ) \
             $(PIC_OBJ) $(INTERRUPTS_C_OBJ) $(INPUT_OBJ) $(SHELL_OBJ) $(TIMER_OBJ) $(PMM_OBJ) $(PAGING_OBJ) \
-			$(POWER_OBJ) $(PIT_OBJ) $(HEAP_OBJ) $(TETRIS_OBJ) # $(ACPI_OBJ) $(TABLES_OBJ)
+			$(POWER_OBJ) $(PIT_OBJ) $(HEAP_OBJ) $(TETRIS_OBJ) $(GRAPHICS_OBJ) # $(ACPI_OBJ) $(TABLES_OBJ)
 
 OBJECTS = $(ASM_OBJ) $(GDT_ASM_OBJ) $(INTERRUPTS_ASM_OBJ) $(IDT_ASM_OBJ) $(C_OBJECTS)
 DEPS = $(C_OBJECTS:.o=.d)

@@ -89,8 +89,6 @@ void tetris_board_render_border();
 void tetris_piece_render(const tetris_piece_t *piece);
 void tetris_board_render(const tetris_board_t *board);
 
-bool tetris_board_generate_mosaic(tetris_board_t *board);
-
 void tetris_board_load_mosaic(tetris_board_t *board);
 
 static const tetris_splashscreen_t tetris_splashscreen = {

@@ -2,6 +2,7 @@
 #include "types.h"
 #include "pmm.h"
 #include "kbool.h"
+#include "fb.h"
 
 #define IDENTITY_TABLE_COUNT 32
 
@@ -18,7 +19,6 @@ static bool vm_page_used(u32int page);
 static void vm_mark_page_used(u32int page);
 static void vm_mark_page_free(u32int page);
 static s32int vm_find_free_run(u32int page_count);
-
 
 void paging_init(void)
 {

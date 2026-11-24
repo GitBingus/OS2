@@ -2,8 +2,14 @@ global loader                   ; loader is the entry point for the bootloader
 
 MAGIC_NUMBER equ 0x1BADB002     ; defines the magic number for the multiboot header
 ALIGN_MODULES equ 0x00000003    ; tell GRUB to align modules, Here, 0x03 requests page-aligned boot modules (bit 0) and basic memory information (bit 1)
-FLAGS equ ALIGN_MODULES         ; defines the flags for the multiboot header
-CHECKSUM equ -(MAGIC_NUMBER + ALIGN_MODULES)  ; defines the checksum for the multiboot header
+VIDEO_MODE equ 0x00000004               ; defines video mode 
+FLAGS equ ALIGN_MODULES | VIDEO_MODE
+CHECKSUM equ -(MAGIC_NUMBER + FLAGS)    ; calculates checksum
+
+dd 0       ; Linear graphics mode
+dd 320     ; Width
+dd 200     ; Height
+dd 8       ; Bits per pixel
 
 KERNEL_STACK_SIZE equ 4096      ; defines the size of the kernel stack in bytes
 
