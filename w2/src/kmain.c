@@ -99,6 +99,7 @@ void kmain(u32int ebx) {
 
     // Initialise graphics
     graphics_init(mb_info);
+    graphics_rgb_test();
     tui_write("[OK] Graphics enabled\n");
 
     pit_init(PIT_DEFAULT_FREQUENCY);

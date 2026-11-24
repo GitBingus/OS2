@@ -27,8 +27,8 @@ void graphics_init(multiboot_info_t *mb_info) {
     u8int   framebuffer_type    = mb_info->framebuffer_type;
     u64int  framebuffer_size    = (u64int)framebuffer_pitch * framebuffer_height;
 
-    if (framebuffer_bpp != 8) return; // Only support 8 bits per pixel (indexed color)
-    if (framebuffer_type != MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED) return; // Only support indexed color
+    if (framebuffer_bpp != 32) return; // Only support 32 bits per pixel (RGB)
+    if (framebuffer_type != MULTIBOOT_FRAMEBUFFER_TYPE_RGB) return; // Only support RGB
     if (framebuffer_pitch < framebuffer_width) return; // Invalid pitch (should be at least as wide as the framebuffer width)
 
     if (framebuffer_addr > 0xFFFFFFFFULL) return; // Framebuffer address exceeds 32-bit limit
@@ -77,75 +77,117 @@ void graphics_init(multiboot_info_t *mb_info) {
     framebuffer.pitch = framebuffer_pitch;
     framebuffer.width = framebuffer_width;
     framebuffer.height = framebuffer_height;
-
     framebuffer.bpp = framebuffer_bpp;
     framebuffer.type = framebuffer_type;
+    framebuffer.red_position = mb_info->framebuffer_red_field_position;
+    framebuffer.red_mask_size = mb_info->framebuffer_red_mask_size;
 
-    graphics_palette_test();
+    framebuffer.green_position = mb_info->framebuffer_green_field_position;
+    framebuffer.green_mask_size = mb_info->framebuffer_green_mask_size;
+
+    framebuffer.blue_position = mb_info->framebuffer_blue_field_position;
+    framebuffer.blue_mask_size = mb_info->framebuffer_blue_mask_size;
 }
 
-void graphics_clear(u8int colour) {
+void graphics_clear(u8int red, u8int green, u8int blue) {
     for (u32int y = 0; y < framebuffer.height; y++) {
         for (u32int x = 0; x < framebuffer.width; x++) {
-            graphics_putpixel(x, y, colour);
-        }
-    }
-}
-
-void graphics_palette_test(void) {
-    graphics_clear(0);
-
-    // Calculate the dimensions of each palette square.
-    u32int cell_width = framebuffer.width / 16;
-    u32int cell_height = framebuffer.height / 16;
-
-    if (cell_width == 0 || cell_height == 0) return;
-
-    // Draw all 256 palette entries.
-    for (u32int y = 0; y < 16; y++) {
-        for (u32int x = 0; x < 16; x++) {
-
-            // Calculate the palette index.
-            u8int colour = (u8int)((y * 16) + x);
-
-            // Draw the colour square, leaving a 1-pixel gap.
-            graphics_draw_rect(
-                x * cell_width,
-                y * cell_height,
-                cell_width - 1,
-                cell_height - 1,
-                colour
-            );
+            graphics_putpixel(x, y, red, green, blue);
         }
     }
 }
 
 void graphics_putpixel(
-    unsigned int x,
-    unsigned int y,
-    unsigned int colour
+    u32int x,
+    u32int y,
+    u8int red,
+    u8int green,
+    u8int blue
 ) {
-    if (framebuffer.pixels == 0) return; // check if fb was initialised
-    if (x >= framebuffer.width || y >= framebuffer.height) return; // check fb is not out of bounds / coords
+    if (framebuffer.pixels == 0) return;
+    if (x >= framebuffer.width || y >= framebuffer.height) return;
 
-    u32int offset = (y * framebuffer.pitch) + x; // calculate offset - pos in fb memory
-    framebuffer.pixels[offset] = (u8int)colour; // write the colour to fb memory
+    u32int offset = (y * framebuffer.pitch) + (x * 4);
+
+    u32int pixel = // Combine the RGB values into a single pixel value.
+        ((u32int)red   << framebuffer.red_position)   |
+        ((u32int)green << framebuffer.green_position) |
+        ((u32int)blue  << framebuffer.blue_position);
+
+    volatile u32int *pixel_address =
+        (volatile u32int *)(framebuffer.pixels + offset);
+
+    *pixel_address = pixel;
 }
+
+
+void graphics_rgb_test(void) {
+    static const u8int levels[6] = {
+        0, 51, 102, 153, 204, 255
+    };
+
+    if (framebuffer.pixels == 0)
+        return;
+
+    graphics_clear(0, 0, 0);
+
+    const u32int columns = 18;
+    const u32int rows = 12;
+
+    for (u32int i = 0; i < 216; i++) {
+        u32int red_index   = i % 6;
+        u32int green_index = (i / 6) % 6;
+        u32int blue_index  = i / 36;
+
+        u8int red   = levels[red_index];
+        u8int green = levels[green_index];
+        u8int blue  = levels[blue_index];
+
+        u32int column = i % columns;
+        u32int row    = i / columns;
+
+        // Calculate cell boundaries without leaving gaps.
+        u32int x1 = column * framebuffer.width / columns;
+        u32int x2 = (column + 1) * framebuffer.width / columns;
+
+        u32int y1 = row * framebuffer.height / rows;
+        u32int y2 = (row + 1) * framebuffer.height / rows;
+
+        graphics_draw_rect(
+            x1,
+            y1,
+            x2 - x1,
+            y2 - y1,
+            red,
+            green,
+            blue
+        );
+    }
+}
+
 
 void graphics_draw_rect(
     u32int x,
     u32int y,
     u32int width,
     u32int height,
-    u8int colour
-){
+    u8int red,
+    u8int green,
+    u8int blue
+) {
     if (x >= framebuffer.width || y >= framebuffer.height) return;
-    if (width > framebuffer.width - x) width = framebuffer.width - x;
-    if (height > framebuffer.height - y) height = framebuffer.height - y;
+
+    if (width > framebuffer.width - x)
+        width = framebuffer.width - x;
+
+    if (height > framebuffer.height - y)
+        height = framebuffer.height - y;
 
     for (u32int py = 0; py < height; py++) {
         for (u32int px = 0; px < width; px++) {
-            graphics_putpixel(x + px, y + py, colour);
+            graphics_putpixel(
+                x + px, y + py, red, green, blue
+            );
         }
     }
 }

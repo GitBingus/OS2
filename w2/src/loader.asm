@@ -30,7 +30,7 @@ section .text
     dd 0                        ; Linear graphics mode
     dd 320                      ; Width
     dd 200                      ; Height
-    dd 8                        ; Bits per pixel
+    dd 32                       ; Bits per pixel
 
 loader:
     mov esp, kernel_stack + KERNEL_STACK_SIZE   ; sets the stack pointer to the top of the kernel stack
