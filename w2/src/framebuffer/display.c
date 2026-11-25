@@ -3,8 +3,16 @@
 static display_mode_t current_mode = DISPLAY_MODE_NONE;
 static bool initialised = false;
 
-static u32int foreground_colour;
-static u32int background_colour;
+static u32int foreground_colour = RGB(255, 255, 255);
+static u32int background_colour = RGB(0, 0, 0);
+
+static u32int gfx_cursor_x = 0;
+static u32int gfx_cursor_y = 0;
+
+static void gfx_cursor_reset(void) {
+    gfx_cursor_x = 0;
+    gfx_cursor_y = 0;
+}
 
 // Initialise the display manager and select the initial display backend.
 bool display_init(display_mode_t mode) {
@@ -44,6 +52,8 @@ void display_clear(void) {
                 RGB_GREEN(BG),
                 RGB_BLUE(BG)
             );
+
+            gfx_cursor_reset(); 
             break;
 
         case DISPLAY_MODE_TEXT:
@@ -84,6 +94,52 @@ void display_setcolour(u32int fg, u32int bg) {
     }
 }
 
+static void gfx_newline(void) {
+    gfx_cursor_x = 0;
+    gfx_cursor_y += font_get_line_height();
+    /* TODO: scroll when gfx_cursor_y + line height > screen height */
+}
+
 void display_putchar(unsigned char c) {
-    (void)c;
+    switch (display_get_mode()) {
+        case DISPLAY_MODE_GRAPHICS:
+            switch (c) {
+                case '\n':
+                    gfx_newline();
+                    break;
+
+                case '\r':
+                    gfx_cursor_x = 0;
+                    break;
+
+                case '\t': {
+                    u32int tab_width = font_get_advance(' ') * 4;
+                    gfx_cursor_x = ((gfx_cursor_x / tab_width) + 1) * tab_width;
+                    break;
+                }
+
+                default:
+                    if (c < 32 || c > 126) {
+                        break;  // ignore unprintable characters
+                    }
+
+                    if (gfx_cursor_x + font_get_advance(c) > GRAPHICS_WIDTH) {
+                        gfx_newline();
+                    }
+
+                    font_draw_char(gfx_cursor_x, gfx_cursor_y, c,
+                                   foreground_colour, background_colour);
+
+                    gfx_cursor_x += font_get_advance(c);
+                    break;
+            }
+            break;
+
+        case DISPLAY_MODE_TEXT:
+            tui_putchar(c);
+            break;
+
+        default:
+            break;
+    }
 }

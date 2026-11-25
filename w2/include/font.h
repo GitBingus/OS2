@@ -13,4 +13,7 @@ void font_draw_char(
     u32int background
 );
 
+u32int font_get_advance(unsigned char c);
+u32int font_get_line_height(void);
+
 #endif

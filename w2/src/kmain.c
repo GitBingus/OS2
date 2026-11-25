@@ -70,6 +70,24 @@ void kmain(u32int ebx) {
     tui_init();
     tui_write("[OK] VGA terminal\n");
 
+    // Initialise graphics
+    if (!(graphics_init(mb_info))) {
+        kernel_panic("UH OH! GPU NO WORK");
+    }
+
+    display_init(DISPLAY_MODE_GRAPHICS);
+
+    if (!(display_is_initialised())) kernel_panic("Display not initialised!!!!");
+
+    font_init();
+    tui_write("[OK] Font initialised\n");
+
+    if (display_get_mode() != DISPLAY_MODE_GRAPHICS) {
+        graphics_clear(255, 0, 0);   /* red screen = wrong mode */
+    }
+
+    display_putchar('>');
+
     tui_write("Starting OS2...\n");
 
     // Validate Multiboot information
@@ -99,26 +117,12 @@ void kmain(u32int ebx) {
     tui_write("[OK] Heap memory manager\n");
     tui_write("[OK] Paging enabled\n");
 
-    // Initialise graphics
-    if (!(graphics_init(mb_info))) {
-        kernel_panic("UH OH! GPU NO WORK");
-    }
-
-    display_init(DISPLAY_MODE_GRAPHICS);
-
-    if (!(display_is_initialised())) kernel_panic("Display not initialised!!!!");
-
     tui_write("[OK] Graphics enabled\n");
 
     pit_init(PIT_DEFAULT_FREQUENCY);
 
     pic_unmask_irq(0); // enable PIT
     pic_unmask_irq(1); // enabled keyboard
-
-    font_init();
-    tui_write("[OK] Font initialised\n");
-
-    graphics_clear(0, 0, 0);
 
     __asm__ volatile("sti");
 

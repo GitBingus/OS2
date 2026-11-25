@@ -78,3 +78,19 @@ void font_draw_char(
         }
     }
 }
+
+u32int font_get_advance(unsigned char c) {
+    if (!((c >= 32) && (c <= 126))) return 0; // out of bounds
+
+    // Calculate glyph index
+    u32int index = c - STB_FONT_consolas_12_usascii_FIRST_CHAR;
+
+    // Retrieve glyph metadata
+    stb_fontchar *glyph = &fontdata[index];
+
+    return (u32int)glyph->advance_int;
+}
+
+u32int font_get_line_height(void) {
+    return (u32int)STB_FONT_consolas_12_usascii_LINE_SPACING;
+}
