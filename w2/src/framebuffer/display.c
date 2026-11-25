@@ -58,7 +58,7 @@ void display_draw_rect(u32int x, u32int y, u32int w, u32int h, u32int colour) {
             u32int py = y + row;
 
             /* clip to the screen so the cursor can't write past the framebuffer */
-            if (px >= GRAPHICS_WIDTH || py >= GRAPHICS_HEIGHT) continue;
+            if (px >= graphics_get_width() || py >= graphics_get_height()) continue;
 
             graphics_putpixel(px, py, RGB_RED(colour), RGB_GREEN(colour), RGB_BLUE(colour));
         }
@@ -89,7 +89,7 @@ void display_clear(void) {
 static u32int display_columns(void) {
     if (display_get_mode() == DISPLAY_MODE_GRAPHICS) {
         u32int advance = font_get_advance(' ');
-        return advance ? GRAPHICS_WIDTH / advance : 1;
+        return advance ? graphics_get_width() / advance : 1;
     }
     return SCREEN_WIDTH;
 }
@@ -128,11 +128,35 @@ void display_set_cursor(u32int position) {
     }
 }
 
+
+static void gfx_scroll_if_needed(void) {
+    u32int line_height = font_get_line_height();
+    u32int height = graphics_get_height();
+
+    /* Scroll until a whole line fits below the cursor */
+    while (gfx_cursor_y + line_height > height) {
+        if (gfx_cursor_y < line_height) break;   /* screen shorter than two lines: don't underflow */
+
+        graphics_scroll(
+            line_height,
+            RGB_RED(background_colour),
+            RGB_GREEN(background_colour),
+            RGB_BLUE(background_colour)
+        );
+        gfx_cursor_y -= line_height;
+    }
+}
+
 static void gfx_newline(void) {
-    if (gfx_cursor_visible) gfx_cursor_draw(false);   // erase before moving 
+    if (gfx_cursor_visible) gfx_cursor_draw(false);   /* erase before moving */
+
     gfx_cursor_x = 0;
     gfx_cursor_y += font_get_line_height();
+
+    gfx_scroll_if_needed();
 }
+
+
 void display_putchar(unsigned char c) {
     switch (display_get_mode()) {
         case DISPLAY_MODE_GRAPHICS:
@@ -157,7 +181,7 @@ void display_putchar(unsigned char c) {
                         break;  // ignore unprintable characters
                     }
 
-                    if (gfx_cursor_x + font_get_advance(c) > GRAPHICS_WIDTH) {
+                    if (gfx_cursor_x + font_get_advance(c) > graphics_get_width()) {
                         gfx_newline();
                     }
 
@@ -216,7 +240,7 @@ static bool display_at_line_start(void) {
 static u32int display_line_space(void) {
     switch (display_get_mode()) {
         case DISPLAY_MODE_GRAPHICS:
-            return (gfx_cursor_x >= GRAPHICS_WIDTH) ? 0 : GRAPHICS_WIDTH - gfx_cursor_x;
+            return (gfx_cursor_x >= graphics_get_width()) ? 0 : graphics_get_width() - gfx_cursor_x;
         case DISPLAY_MODE_TEXT:
             return SCREEN_WIDTH - tui_get_column();
         default:

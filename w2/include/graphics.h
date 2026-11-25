@@ -24,6 +24,10 @@
 
 bool graphics_init(multiboot_info_t *mb_info);
 
+u32int graphics_get_width(void);
+u32int graphics_get_height(void);
+void graphics_scroll(u32int pixels, u8int red, u8int green, u8int blue);
+
 typedef struct {
     unsigned int physical_address;  // where the fb stores the memory
     volatile u8int *pixels;         // virtual address kernel will use to write pixels

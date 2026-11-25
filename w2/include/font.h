@@ -15,5 +15,6 @@ void font_draw_char(
 
 u32int font_get_advance(unsigned char c);
 u32int font_get_line_height(void);
+u32int font_blend(u32int fg, u32int bg, u8int coverage);
 
 #endif

@@ -28,8 +28,8 @@ section .text
     dd 0                        ; entry_addr
 
     dd 0                        ; Linear graphics mode
-    dd 320                      ; Width
-    dd 200                      ; Height
+    dd 800                      ; Width
+    dd 600                      ; Height
     dd 32                       ; Bits per pixel
 
 loader:

@@ -2,6 +2,37 @@
 
 static graphics_framebuffer_t framebuffer;
 
+u32int graphics_get_width(void)  { return framebuffer.width; }
+u32int graphics_get_height(void) { return framebuffer.height; }
+
+void graphics_scroll(u32int pixels, u8int red, u8int green, u8int blue) {
+    if (framebuffer.pixels == 0 || pixels == 0) return;
+
+    if (pixels >= framebuffer.height) {
+        graphics_clear(red, green, blue);
+        return;
+    }
+
+    /* Move rows [pixels, height) up to [0, height - pixels) */
+    for (u32int y = 0; y < framebuffer.height - pixels; y++) {
+        volatile u32int *destination =
+            (volatile u32int *)(framebuffer.pixels + y * framebuffer.pitch);
+        volatile u32int *source =
+            (volatile u32int *)(framebuffer.pixels + (y + pixels) * framebuffer.pitch);
+
+        for (u32int x = 0; x < framebuffer.width; x++) {
+            destination[x] = source[x];
+        }
+    }
+
+    /* Clear the rows that were freed at the bottom */
+    graphics_draw_rect(
+        0, framebuffer.height - pixels,
+        framebuffer.width, pixels,
+        red, green, blue
+    );
+}
+
 bool graphics_init(multiboot_info_t *mb_info) {
     /*
         Check that GRUB supplied framebuffer information

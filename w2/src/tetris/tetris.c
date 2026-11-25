@@ -1,8 +1,40 @@
 #include "tetris.h"
+#include "display.h"
 
 #define SPLASH_LETTERS 6
 #define SPLASH_WIDTH   9
 #define SPLASH_HEIGHT  9
+
+static const u32int tetris_palette[16] = {   /* standard VGA colours */
+    RGB(0,0,0),       RGB(0,0,170),     RGB(0,170,0),     RGB(0,170,170),
+    RGB(170,0,0),     RGB(170,0,170),   RGB(170,85,0),    RGB(170,170,170),
+    RGB(85,85,85),    RGB(85,85,255),   RGB(85,255,85),   RGB(85,255,255),
+    RGB(255,85,85),   RGB(255,85,255),  RGB(255,255,85),  RGB(255,255,255)
+};
+
+static u32int cell_size, board_x, board_y;
+
+static void tetris_layout(void) {
+    u32int w = graphics_get_width();
+    u32int h = graphics_get_height();
+
+    cell_size = (h - 40) / HEIGHT;                  /* leave a margin top and bottom */
+    board_x   = (w - WIDTH * cell_size) / 2;
+    board_y   = (h - HEIGHT * cell_size) / 2;
+}
+
+static void tetris_draw_cell(int cx, int cy, unsigned char colour_index) {
+    if (cx < 0 || cx >= WIDTH || cy < 0 || cy >= HEIGHT) return;   /* piece partly above the board */
+
+    u32int x = board_x + (u32int)cx * cell_size;
+    u32int y = board_y + (u32int)cy * cell_size;
+
+    u32int colour = (colour_index == EMPTY_CELL)
+                  ? RGB(20, 20, 20)
+                  : tetris_palette[colour_index & 0x0F];
+
+    display_draw_rect(x + 1, y + 1, cell_size - 2, cell_size - 2, colour);   /* 1px gap = grid */
+}
 
 void show_splashscreen(void) {
     
@@ -129,86 +161,31 @@ void tetris_board_init(tetris_board_t *board) {
 }
 
 void tetris_board_render(const tetris_board_t *board) {
-    /*
-        Iterate through every row.
-        Iterate through every column.
-        Read the cell's value.
-        Determine its colour.
-        Calculate its framebuffer position.
-        Draw the block.
-    */
-
-    (void)(board);
-
-    for (int y = 0; y < HEIGHT; y++) {
-        for (u32int x = 0; x < WIDTH; x++) {
-            unsigned int screen_x = BOARD_START_X + (x * 2);
-            unsigned int screen_y = BOARD_START_Y + y;
-
-            unsigned int cursor = (screen_y * SCREEN_WIDTH) + screen_x;
-            unsigned char colour = board->cells[y][x];
-
-            if (colour == EMPTY_CELL) {
-                fb_write_cell(cursor,     ' ', COLOUR.WHITE, COLOUR.BLACK);
-                fb_write_cell(cursor + 1, ' ', COLOUR.WHITE, COLOUR.BLACK);
-            } else {
-                fb_write_cell(cursor,     0xFE, colour, COLOUR.BLACK);
-                fb_write_cell(cursor + 1, 0xFE, colour, COLOUR.BLACK);
-            }
-        }
-    }
+    for (int y = 0; y < HEIGHT; y++)
+        for (int x = 0; x < WIDTH; x++)
+            tetris_draw_cell(x, y, board->cells[y][x]);
 }
 
+
 void tetris_board_render_border(void) {
-    unsigned int left   = BOARD_START_X - 1;
-    unsigned int right  = BOARD_START_X + BOARD_SCREEN_WIDTH;
-    unsigned int top    = BOARD_START_Y - 1;
-    unsigned int bottom = BOARD_START_Y + HEIGHT;
+    u32int w = WIDTH * cell_size;
+    u32int h = HEIGHT * cell_size;
+    u32int white = RGB(255, 255, 255);
 
-    // draw horizontal lines
-    for (unsigned int x = left + 1; x < right; x++) {
-        fb_write_cell((top * SCREEN_WIDTH) + x, 196, COLOUR.WHITE, COLOUR.BLACK);
-        fb_write_cell((bottom * SCREEN_WIDTH) + x, 196, COLOUR.WHITE, COLOUR.BLACK);
-    }
-
-    // draw vertical lines
-    for (unsigned int y = top + 1; y < bottom; y++) {
-        fb_write_cell((y * SCREEN_WIDTH) + left, 179, COLOUR.WHITE, COLOUR.BLACK);
-        fb_write_cell((y * SCREEN_WIDTH) + right, 179, COLOUR.WHITE, COLOUR.BLACK);
-    }
-
-    // draw corners
-    fb_write_cell((top * SCREEN_WIDTH) + left, 218, COLOUR.WHITE, COLOUR.BLACK);
-    fb_write_cell((top * SCREEN_WIDTH) + right, 191, COLOUR.WHITE, COLOUR.BLACK);
-    fb_write_cell((bottom * SCREEN_WIDTH) + left, 192, COLOUR.WHITE, COLOUR.BLACK);
-    fb_write_cell((bottom * SCREEN_WIDTH) + right, 217, COLOUR.WHITE, COLOUR.BLACK);
+    display_draw_rect(board_x - 3, board_y - 3, w + 6, 2, white);       /* top */
+    display_draw_rect(board_x - 3, board_y + h + 1, w + 6, 2, white);   /* bottom */
+    display_draw_rect(board_x - 3, board_y - 3, 2, h + 6, white);       /* left */
+    display_draw_rect(board_x + w + 1, board_y - 3, 2, h + 6, white);   /* right */
 }
 
 
 void tetris_piece_render(const tetris_piece_t *piece) {
     const tetromino_t *ttm = &tetrominoes[piece->type];
-    unsigned char colour = ttm->colour;
 
-    for (int y = 0; y < 4; y++) {
-        for (int x = 0; x < 4; x++) {
-
-            unsigned char tile = ttm->tiles[y][x];
-
-            if (tile == 1) {
-                unsigned int screen_x =
-                    BOARD_START_X + ((piece->x + x) * 2);
-
-                unsigned int screen_y =
-                    BOARD_START_Y + piece->y + y;
-
-                unsigned int cursor =
-                    (screen_y * SCREEN_WIDTH) + screen_x;
-
-                fb_write_cell(cursor,     0xFE, colour, COLOUR.BLACK);
-                fb_write_cell(cursor + 1, 0xFE, colour, COLOUR.BLACK);
-            }
-        }
-    }
+    for (int y = 0; y < 4; y++)
+        for (int x = 0; x < 4; x++)
+            if (ttm->tiles[y][x] == 1)
+                tetris_draw_cell((int)piece->x + x, (int)piece->y + y, ttm->colour);
 }
 
 
@@ -222,28 +199,25 @@ void tetris_board_load_mosaic(tetris_board_t *board) {
 
 
 void tetris_init(void) {
-    fb_cursor_disable();
-    fb_clear(FB_BLACK);
-    
-    show_splashscreen();
-    
-    show_play_prompt();
+    display_clear();
+    display_write("TETRIS\n\nPress Enter to play\n");   /* temporary splash; the VGA one needs porting */
     tetris_wait_for_start();
 
-    fb_clear(FB_BLACK);
+    display_clear();
 
-    tetris_board_t Board;
+    tetris_board_t board;
+    tetris_board_init(&board);
+    tetris_board_load_mosaic(&board);
 
-    tui_write("Generating mosaic...");
-    tetris_board_init(&Board);
-
-    fb_clear(FB_BLACK);
-    tetris_board_load_mosaic(&Board);
-
-    tetris_board_render(&Board);
+    tetris_layout();
     tetris_board_render_border();
+    tetris_board_render(&board);
 
-    while (1) {
-        
+    /* Placeholder until the game loop exists: Backspace returns to the shell */
+    keyboard_event_t event;
+    for (;;) {
+        if (keyboard_dequeue(&event) && event.key == KEY_BACKSPACE) break;
     }
+
+    display_clear();
 }
