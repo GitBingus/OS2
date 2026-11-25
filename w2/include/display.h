@@ -29,6 +29,11 @@ bool display_is_initialised(void);
 void display_clear(void);
 void display_write(cstring c);
 void display_putchar(unsigned char c);
+void display_write(cstring c);
+
+u32int display_get_cursor(void);
+void display_set_cursor(u32int position);
+void display_newline(void);
 
 // Text colours: VGA indices in text mode, RGB packed values in graphics mode.
 void display_setcolour(u32int fg, u32int bg);
@@ -47,9 +52,7 @@ void display_draw_rect(
     u32int y,
     u32int width,
     u32int height,
-    u8int red,
-    u8int green,
-    u8int blue
+    u32int colour
 );
 
 #endif

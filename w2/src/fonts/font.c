@@ -92,5 +92,5 @@ u32int font_get_advance(unsigned char c) {
 }
 
 u32int font_get_line_height(void) {
-    return (u32int)STB_FONT_consolas_12_usascii_LINE_SPACING;
+    return 16;  
 }

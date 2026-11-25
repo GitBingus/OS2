@@ -11,6 +11,8 @@ void tui_newline(void);
 void tui_backspace(void);
 void tui_tab(void);
 
+u16int tui_get_column(void);
+
 void tui_move_up(void);
 void tui_move_down(void);
 void tui_move_left(void);
@@ -23,5 +25,9 @@ void tui_clear(void);
 
 u32int tui_get_cursor(void);
 void tui_set_cursor(u32int position);
+void tui_update_cursor(void);
+
+u16int tui_get_column(void);
+u16int tui_get_row(void);
 
 #endif // TUI_H

@@ -1,7 +1,20 @@
 #include "fb.h"
 #include "tui.h"
+#include "display.h"
 
 static unsigned short tui_cursor = 0;
+
+void tui_update_cursor(void) {
+    tui_set_cursor(tui_cursor);
+}
+
+u16int tui_get_column(void) {
+    return tui_cursor % SCREEN_WIDTH;
+}
+
+u16int tui_get_row(void) {
+    return tui_cursor / SCREEN_WIDTH;
+}
 
 void tui_init(void) {   // init tui
     tui_cursor = 0;
@@ -13,55 +26,11 @@ void tui_init(void) {   // init tui
 void tui_putchar(char c) {
     /* write one character at the current cursor position, advance the cursor and update the hardware cursor */
 
-    if (c == '\n') {
-        tui_newline();
-        return;
-    }
-
-    fb_write_cell(tui_cursor, c, foreground, background);
-    tui_cursor++;
-
-    if (tui_cursor >= screen_size) tui_scroll();
-
-    fb_move_cursor(tui_cursor);
-
+    display_putchar(c);
 }
 
 void tui_write(cstring str) {
-    while (*str != '\0') {
-        unsigned int word_length = 0;
-
-        if (*str == '\n') {
-            tui_newline();
-            str++;
-            continue;
-        }
-
-        if (*str == ' ') {
-            tui_putchar(*str++);
-            continue;
-        }
-
-        // Calculate the length of the next word
-        while (str[word_length] != '\0' &&
-               str[word_length] != ' ' &&
-               str[word_length] != '\n') {
-            word_length++;
-        }
-
-        unsigned int column = tui_cursor % SCREEN_WIDTH;     // Find the current column on the screen
-        unsigned int remaining = SCREEN_WIDTH - column;     // Calculate remaining space on the current line
-
-        // If the word is longer than the remaining space on the line, move to the next line
-        if (column != 0 && word_length > remaining) {
-            tui_newline();
-        }
-
-        while (word_length != 0) { // Write the word character by character
-            tui_putchar(*str++);
-            word_length--;
-        }
-    }
+    display_write(str);
 }
 
 void tui_handle_key(keyboard_event_t event) {

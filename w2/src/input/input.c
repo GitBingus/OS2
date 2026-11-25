@@ -1,6 +1,7 @@
 #include "input.h"
 #include "keyboard.h"
 #include "tui.h"
+#include "display.h"
 
 
 input_action_t readline(string buffer, u32int size);
@@ -36,20 +37,20 @@ static void input_redraw_line(
     u32int cursor
 ) {
     // Move to the beginning of the editable input
-    tui_set_cursor(input_start);
+    display_set_cursor(input_start);
 
     // Redraw the current text
     for (u32int i = 0; i < length; i++) {
-        tui_putchar(buffer[i]);
+        display_putchar(buffer[i]);
     }
 
     // Erase any characters left over from the old text
     for (u32int i = length; i < previous_length; i++) {
-        tui_putchar(' ');
+        display_putchar(' ');
     }
 
     // Restore the editing cursor
-    tui_set_cursor(input_start + cursor);
+    display_set_cursor(input_start + cursor);
 }
 
 int getc(void) {
@@ -120,13 +121,13 @@ void input_replace_line (
 ) {
     if (!buffer || size == 0 || !replacement || !length || !cursor) return;
 
-    tui_set_cursor(input_start);
+    display_set_cursor(input_start);
 
     for (u32int i = 0; i < *length; i++) {
-        tui_putchar(' ');
+        display_putchar(' ');
     }
 
-    tui_set_cursor(input_start);
+    display_set_cursor(input_start);
     
     u32int i = 0;
 
@@ -140,7 +141,7 @@ void input_replace_line (
     *length = i;
     *cursor = i;
 
-    tui_set_cursor(input_start);
+    display_set_cursor(input_start);
 
     tui_write(buffer);
 }
@@ -155,7 +156,7 @@ static input_action_t readline_internal(
         return INPUT_NONE;
     }
     
-    u32int input_start = tui_get_cursor();
+    u32int input_start = display_get_cursor();
     u32int index = 0;
     u32int cursor = 0;
     u32int history_index = history_count;
@@ -173,7 +174,7 @@ static input_action_t readline_internal(
         if (c == INPUT_KEY_LEFT) {
             if (cursor > 0) {
                 cursor--;
-                tui_set_cursor(input_start + cursor);
+                display_set_cursor(input_start + cursor);
             }
             continue;
         }
@@ -181,7 +182,7 @@ static input_action_t readline_internal(
         if (c == INPUT_KEY_RIGHT) {
             if (cursor < index) {
                 cursor++;
-                tui_set_cursor(input_start + cursor);
+                display_set_cursor(input_start + cursor);
             }
             continue;
         }
@@ -259,7 +260,7 @@ static input_action_t readline_internal(
                 
         if (c == '\n') {
             buffer[index] = '\0';
-            tui_newline();
+            display_newline();
             return INPUT_SUBMITTED;
         }
         
@@ -314,7 +315,7 @@ static input_action_t readline_internal(
     }
     // make sure the buffer is null-terminated.
     buffer[index] = '\0';
-    tui_newline();
+    display_newline();
     
     return INPUT_SUBMITTED;
 }
