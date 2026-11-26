@@ -45,6 +45,10 @@ void font_draw_char(
         glyph->t0 * STB_FONT_consolas_22_usascii_BITMAP_HEIGHT
     );
 
+    
+    graphics_draw_rect(x, y, font_get_advance(c), font_get_line_height(),
+                       RGB_RED(background), RGB_GREEN(background), RGB_BLUE(background));
+
     // Iterate through glyph pixels 
 
     for (int gy = 0; gy < height; gy++) {

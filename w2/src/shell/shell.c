@@ -979,14 +979,12 @@ void shell_init(void) {
             shell_history_get,
             shell_history_count());
 
-        if (action == INPUT_SUBMITTED)
-{
-            if (buffer[0] != '\0')
-            {
+        if (action == INPUT_SUBMITTED) {
+            if (buffer[0] != '\0') {
                 shell_history_add(buffer);
                 shell_execute(buffer);
             }
-        }
+        } 
     }
 }
 
