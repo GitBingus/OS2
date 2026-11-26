@@ -76,6 +76,10 @@ Planned and implemented game features include:
 
 ## Screenshots & Development
 
+Unfortunately the screenshots I took from my Macbook don't exist anymore, but my PC screenshots do exist
+The screenshots posted here are what I deem to be the most relevant, but look in the `images/` folder for all of them!
+
+
 ---
 
 ## Building & Running
