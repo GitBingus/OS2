@@ -4,8 +4,6 @@
 #include "kbool.h"
 #include "fb.h"
 
-#define IDENTITY_TABLE_COUNT 32
-
 static u32int page_directory[PAGE_ENTRIES]
     __attribute__((aligned(4096)));
 
@@ -20,8 +18,7 @@ static void vm_mark_page_used(u32int page);
 static void vm_mark_page_free(u32int page);
 static s32int vm_find_free_run(u32int page_count);
 
-void paging_init(void)
-{
+void paging_init(void) {
     for (u32int i = 0; i < PAGE_ENTRIES; i++) {
         page_directory[i] = 0;
     }

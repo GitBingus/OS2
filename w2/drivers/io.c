@@ -19,6 +19,21 @@ void serial_write_char(char c) {
     outb(COM1, c);
 }
 
+
+void serial_write_hex(u32int value) {
+    static const char hex_digits[] = "0123456789ABCDEF";
+
+    serial_write("0x");
+
+    for (int i = 7; i >= 0; i--) {
+        u8int nibble = (value >> (i * 4)) & 0xF;
+        char character = hex_digits[nibble];
+
+        serial_write_char(character);
+    }
+}
+
+
 void serial_write(const char *str) {
     while (*str) {
         serial_write_char(*str++);

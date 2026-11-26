@@ -310,3 +310,8 @@ void display_write(cstring c) {
 
     display_cursor_update();
 }
+
+void display_setcolour(u32int foreground, u32int background) {
+    foreground_colour = foreground;
+    background_colour = background;
+}

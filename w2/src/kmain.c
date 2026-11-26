@@ -1,3 +1,4 @@
+
 #include "types.h"
 #include "multiboot.h"
 #include "gdt.h"
@@ -26,21 +27,21 @@ void tetromino_debug(const tetromino_t *tetromino) {
     for (int y = 0; y < 4; y++) {
         for (int x = 0; x < 4; x++) {
             if (tetromino->tiles[y][x]) {
-                tui_write("[]");
+                serial_write("[]");
             } else {
-                tui_write("  ");
+                serial_write("  ");
             }
         }
-        tui_write("\n");
+        serial_write("\n");
     }
 }
 
 static void kernel_panic(const char *message) {
     __asm__ volatile("cli");
 
-    tui_write("\nKERNEL PANIC: ");
-    tui_write(message);
-    tui_newline();
+    serial_write("KERNEL PANIC: ");
+    serial_write(message);
+    serial_write("\n");
 
     for (;;) {
         __asm__ volatile("hlt");
@@ -57,21 +58,24 @@ static void kernel_panic(const char *message) {
 void kmain(u32int ebx) {
     __asm__ volatile("cli");
 
+    serial_init();
+    serial_write("OS2 serial debugging started\n");
+
     multiboot_info_t *mb_info =
         (multiboot_info_t *)ebx;
 
-    tui_write("OS2 Kernel starting...\n");
-    tui_write("Initialising...\n");
+    serial_write("OS2 Kernel starting...\n");
+    serial_write("Initialising...\n");
 
     // Initialise CPU segmentation
     setGDT();
-    tui_write("[OK] CPU segmentation\n");
+    serial_write("[OK] CPU segmentation\n");
 
     // Initialise VGA terminal
     tui_init();
-    tui_write("[OK] VGA terminal\n");
+    serial_write("[OK] VGA terminal\n");
 
-    tui_write("Starting OS2...\n");
+    serial_write("Starting OS2...\n");
 
     // Validate Multiboot information
     if (mb_info == 0) {
@@ -82,98 +86,97 @@ void kmain(u32int ebx) {
         kernel_panic("Multiboot memory map unavailable");
     }
 
-    tui_write("[OK] Multiboot information\n");
+    serial_write("[OK] Multiboot information\n");
+
     // Initialise physical memory management
     pmm_init(mb_info);
-    tui_write("[OK] Physical memory manager\n");
+    serial_write("[OK] Physical memory manager\n");
 
     // Initialise interrupt infrastructure
     pic_remap();
     idt_init();
 
-    tui_write("[OK] Interrupt descriptor table\n");
-
-    // Initialise the sound system
-    sound_init();
-
-    tui_write("[OK] Sound Blaster 16 initialised\n");
-
-    if (!sb16_init()) {
-        kernel_panic("Failed to initialise Sound Blaster 16");
-    }
-
-    if (!sb16_dma_init()) {
-        kernel_panic("Failed to initialise DMA");
-    }
-
-    sb16_generate_test_tone();
+    serial_write("[OK] Interrupt descriptor table\n");
 
     // Initialise virtual memory and enable paging
     paging_init();
     heap_init();
 
-    tui_write("[OK] Heap memory manager\n");
-    tui_write("[OK] Paging enabled\n");
+    serial_write("[OK] Heap memory manager\n");
+    serial_write("[OK] Paging enabled\n");
 
-    tui_write("[OK] Graphics enabled\n");
+    serial_write("[OK] Graphics enabled\n");
 
     // Initialise graphics
     if (!(graphics_init(mb_info))) {
         kernel_panic("GPU Could not be enabled");
     }
 
+    serial_write("Framebuffer virtual pointer: ");
+    serial_write_hex((u32int)framebuffer.pixels);
+    serial_write("\n");
+
+    serial_write("Framebuffer address: ");
+    serial_write_u32((u32int)mb_info->framebuffer_addr);
+    serial_write("\n");
+
+    serial_write("Framebuffer width: ");
+    serial_write_u32(mb_info->framebuffer_width);
+    serial_write("\n");
+
+    serial_write("Framebuffer height: ");
+    serial_write_u32(mb_info->framebuffer_height);
+    serial_write("\n");
+
+    serial_write("Framebuffer pitch: ");
+    serial_write_u32(mb_info->framebuffer_pitch);
+    serial_write("\n");
+
+    serial_write("Framebuffer bpp: ");
+    serial_write_u32(mb_info->framebuffer_bpp);
+    serial_write("\n");
+
+    serial_write("Framebuffer type: ");
+    serial_write_u32(mb_info->framebuffer_type);
+    serial_write("\n");
+
     display_init(DISPLAY_MODE_GRAPHICS);
 
-    if (!(display_is_initialised())) kernel_panic("Display not initialised");
+    if (!(display_is_initialised())) {
+        kernel_panic("Display not initialised");
+    }
 
     font_init();
-    tui_write("[OK] Font initialised\n");
 
-    if (display_get_mode() != DISPLAY_MODE_GRAPHICS) {
-        graphics_clear(255, 0, 0);   /* red screen = wrong mode */
-        for (;;) __asm__ volatile("hlt");
-    }
+    display_setcolour(RGB(255, 255, 255), RGB(0, 0, 0));
+    display_write("[OK] Font initialised\n");
 
+    // Initialise the PIT
     pit_init(PIT_DEFAULT_FREQUENCY);
 
-    pic_unmask_irq(0); // enable PIT
-    pic_unmask_irq(1); // enabled keyboard
-    // pic_unmask_irq(5); // enable sound blaster 16
+    if (!sb16_init()) kernel_panic("SB16 init failed");
+    if (!sb16_dma_init()) kernel_panic("DMA init failed");
 
-    __asm__ volatile("sti"); // enable interrupts
+    sb16_generate_test_tone();
 
-    serial_init();
-    serial_write("OS2 serial debugging started\n");
+    pic_unmask_irq(0);
+    pic_unmask_irq(1);
 
-    tui_write("[OK] PIT and keyboard interrupts enabled\n");
+    __asm__ volatile("sti");
 
-    serial_write("A: Before playback\n");
-
-    bool result = sb16_start_playback();
-
-    serial_write("B: After playback\n");
-
-    if (result) {
-        serial_write("C: Playback returned true\n");
-    }
-
-    serial_write("SB16 debug stage: ");
     serial_write_u32(sb16_debug_stage);
     serial_write("\n");
 
-    serial_write("SB16 write value: ");
     serial_write_u32(sb16_write_value);
     serial_write("\n");
 
-    serial_write("DSP write status: ");
     serial_write_u32(sb16_last_write_status);
     serial_write("\n");
 
-    serial_write("SB16 write attempts: ");
     serial_write_u32(sb16_write_attempts);
     serial_write("\n");
 
-    // tui_write("Testing tetrominoes:\n");
+    // serial_write("Testing tetrominoes:\n");
     // tetromino_debug(&tetrominoes[TETROMINO_TYPE_I]);
     // tetromino_debug(&tetrominoes[TETROMINO_TYPE_O]);
     // tetromino_debug(&tetrominoes[TETROMINO_TYPE_J]);
@@ -182,10 +185,8 @@ void kmain(u32int ebx) {
     // tetromino_debug(&tetrominoes[TETROMINO_TYPE_S]);
     // tetromino_debug(&tetrominoes[TETROMINO_TYPE_T]);
 
-    serial_write("D: Before shell_init\n");
-    shell_init();
-    serial_write("E: After shell_init\n");
-
     // Shell should normally never return
+    shell_init();
+
     kernel_panic("Shell unexpectedly returned");
 }

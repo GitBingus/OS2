@@ -22,7 +22,7 @@ else ifeq ($(UNAME_S),Linux)
     LD := ld
 	AUDIO_BACKEND := sdl
     GENISOIMAGE := genisoimage
-    QEMU_DISPLAY := gtk
+    QEMU_DISPLAY := sdl
     QEMU_ACCEL := tcg
 	MKRESCUE := grub-mkrescue
 

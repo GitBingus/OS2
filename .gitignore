@@ -15,3 +15,5 @@ requirements.txt
 *.txt
 *.lst
 w2\iso\boot\old\stage2_eltorito
+*.wav
+*.ppm

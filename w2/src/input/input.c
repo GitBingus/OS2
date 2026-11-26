@@ -2,6 +2,7 @@
 #include "keyboard.h"
 #include "tui.h"
 #include "display.h"
+#include "io.h"
 
 
 input_action_t readline(string buffer, u32int size);
@@ -55,8 +56,13 @@ static void input_redraw_line(
 
 int getc(void) {
     keyboard_event_t event;
+
+    static u32int last_irq_count = 0;
     
     for (;;) {
+        if (keyboard_irq_count != last_irq_count) {
+            last_irq_count = keyboard_irq_count;
+        }
         if (keyboard_dequeue(&event)) {
             switch (event.key) {
                 case KEY_CHARACTER:

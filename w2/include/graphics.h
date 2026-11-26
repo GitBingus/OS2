@@ -44,6 +44,9 @@ typedef struct {
     u8int blue_mask_size;
 } graphics_framebuffer_t;
 
+
+extern graphics_framebuffer_t framebuffer;
+
 void graphics_putpixel(
     u32int x,
     u32int y,

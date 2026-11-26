@@ -121,22 +121,14 @@ const f64 NOTES[NUM_OCTAVES * OCTAVE_SIZE] = {
 #define TEST_DURATION  1
 
 void sb16_generate_test_tone(void) {
+    serial_write_u32((u32int)dma_buffer);
+    serial_write("\n");
+
     for (u32int i = 0; i < DMA_BUFFER_SIZE; i++) {
         dma_buffer[i] = (i % 50 < 25) ? 192 : 64;
-        serial_write("DMA buffer address: ");
-        serial_write_u32(dma_physical_address);
-
-        serial_write("\nFirst sample: ");
-        serial_write_u32(dma_buffer[0]);
-
-        serial_write("\nSecond sample: ");
-        serial_write_u32(dma_buffer[25]);
-
-        serial_write("\nThird sample: ");
-        serial_write_u32(dma_buffer[50]);
-
-        serial_write("\n");
     }
+    serial_write_u32(dma_buffer[0]);
+    serial_write("\n");
 }
 
 void music_init() {
@@ -379,18 +371,24 @@ bool sb16_dma_init(void) {
         return false;
     }
 
-    // Configure the DMA controller for the Sound Blaster 16 device
-    outb(DMA_MASK, 0x04 | DMA_CHANNEL); // Mask the channel
-    outb(DMA_CLEAR_FF, 0x00);           // Clear the flip-flop
-    outb(DMA_MODE, 0x59 | DMA_CHANNEL); // Set mode: single-cycle, auto-init, write
-    outb(DMA_CLEAR_FF, 0x00); // Clear the flip-flop again
-    outb(DMA_ADDR + DMA_CHANNEL * 2, (u8int)(dma_physical_address & 0xFF)); // Set low byte of address
-    outb(DMA_ADDR + DMA_CHANNEL * 2 + 1, (u8int)((dma_physical_address >> 8) & 0xFF)); // Set high byte of address
-    outb(DMA_CLEAR_FF, 0x00); // Clear the flip-flop again
-    outb(DMA_COUNT + DMA_CHANNEL * 2, (u8int)((DMA_BUFFER_SIZE - 1) & 0xFF)); // Set low byte of count
-    outb(DMA_COUNT + DMA_CHANNEL * 2 + 1, (u8int)(((DMA_BUFFER_SIZE - 1) >> 8) & 0xFF)); // Set high byte of count
-    outb(DMA_PAGE, (u8int)(dma_physical_address >> 16)); // Set page register
-    outb(DMA_MASK, DMA_CHANNEL);        // Unmask the channel
+    // Mask DMA channel 1
+    outb(DMA_MASK, 0x04 | DMA_CHANNEL);
+
+    // Set DMA mode
+    outb(DMA_MODE, 0x59 | DMA_CHANNEL);
+
+    // Set address
+    outb(DMA_CLEAR_FF, 0x00);
+    outb(DMA_ADDR, (u8int)(dma_physical_address & 0xFF));
+    outb(DMA_ADDR, (u8int)((dma_physical_address >> 8) & 0xFF));
+
+    // Set transfer count
+    outb(DMA_CLEAR_FF, 0x00);
+    outb(DMA_COUNT, (u8int)((DMA_BUFFER_SIZE - 1) & 0xFF));
+    outb(DMA_COUNT, (u8int)(((DMA_BUFFER_SIZE - 1) >> 8) & 0xFF));
+
+    // Set page
+    outb(DMA_PAGE, (u8int)(dma_physical_address >> 16));
 
     return true;
 }

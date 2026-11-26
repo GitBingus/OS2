@@ -11,6 +11,8 @@
 
 #include "types.h"
 
+extern volatile u32int keyboard_irq_count;
+
 static const char keymap_normal[128] = {
     // Number row
     [0x02] = '1',

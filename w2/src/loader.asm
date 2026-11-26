@@ -29,7 +29,7 @@ section .text
 
     dd 0                        ; Linear graphics mode
     dd 1280                     ; Width
-    dd 720                      ; Height
+    dd 768                      ; Height
     dd 32                       ; Bits per pixel
 
 loader:

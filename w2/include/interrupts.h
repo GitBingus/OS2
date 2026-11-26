@@ -60,6 +60,8 @@ struct idtr_entry {
 
 _Static_assert(sizeof(struct idt_entry) == 8, "IDT entry must be 8 bytes"); // check to make sure size of IDT   entry is correct
 _Static_assert(sizeof(struct idtr_entry) == 6, "IDTR must be 6 bytes");     // check to make sure size of IDTR  entry is correct
+_Static_assert(__builtin_offsetof(struct idtr_entry, base) == 2,
+    "IDTR base offset is incorrect");
 
 void idt_set_gate(u8int vector, u32int handler, u16int selector, u8int attributes);
 

@@ -10,6 +10,7 @@ void serial_write_u32(u32int value);
 #include "types.h"
 
 void outb(unsigned short port, unsigned char data);
+void serial_write_hex(u32int value);
 
 unsigned char read_scan_code(void);
 char scan_code_to_ascii(unsigned char scan_code);

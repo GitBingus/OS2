@@ -1,6 +1,6 @@
 #include "graphics.h"
 
-static graphics_framebuffer_t framebuffer;
+graphics_framebuffer_t framebuffer;
 
 u32int graphics_get_width(void)  { return framebuffer.width; }
 u32int graphics_get_height(void) { return framebuffer.height; }
