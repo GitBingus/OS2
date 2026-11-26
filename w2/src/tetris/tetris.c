@@ -1,5 +1,6 @@
 #include "tetris.h"
 #include "display.h"
+#include "pit.h"
 
 #define SPLASH_LETTERS 6
 #define SPLASH_WIDTH   9
@@ -13,6 +14,10 @@ static const u32int tetris_palette[16] = {   /* standard VGA colours */
 };
 
 static u32int cell_size, board_x, board_y;
+static u32int tetris_lighten(u32int c, u32int percent);
+static u32int tetris_darken(u32int c, u32int percent);
+static void tetris_draw_block(u32int x, u32int y, u32int size, u32int colour);
+static bool tetris_try_move(const tetris_board_t *b, tetris_piece_t *p, int dx, int dy);
 
 static void tetris_layout(void) {
     u32int w = graphics_get_width();
@@ -24,45 +29,52 @@ static void tetris_layout(void) {
 }
 
 static void tetris_draw_cell(int cx, int cy, unsigned char colour_index) {
-    if (cx < 0 || cx >= WIDTH || cy < 0 || cy >= HEIGHT) return;   /* piece partly above the board */
+    if (cx < 0 || cx >= WIDTH || cy < 0 || cy >= HEIGHT) return;
 
     u32int x = board_x + (u32int)cx * cell_size;
     u32int y = board_y + (u32int)cy * cell_size;
 
-    u32int colour = (colour_index == EMPTY_CELL)
-                  ? RGB(20, 20, 20)
-                  : tetris_palette[colour_index & 0x0F];
+    if (colour_index == EMPTY_CELL) {
+        display_draw_rect(x + 1, y + 1, cell_size - 2, cell_size - 2, RGB(20, 20, 20));
+        return;
+    }
 
-    display_draw_rect(x + 1, y + 1, cell_size - 2, cell_size - 2, colour);   /* 1px gap = grid */
+    tetris_draw_block(x + 1, y + 1, cell_size - 2, tetris_palette[colour_index & 0x0F]);
+}
+
+static void tetris_draw_block(u32int x, u32int y, u32int size, u32int colour) {
+    u32int bevel = size / 8;
+    if (bevel < 2) bevel = 2;
+
+    u32int light = tetris_lighten(colour, 45);
+    u32int dark  = tetris_darken(colour, 45);
+
+    display_draw_rect(x, y, size, size, colour);                          /* face */
+
+    display_draw_rect(x, y, size, bevel, light);                          /* top highlight */
+    display_draw_rect(x, y, bevel, size, light);                          /* left highlight */
+
+    display_draw_rect(x, y + size - bevel, size, bevel, dark);            /* bottom shadow */
+    display_draw_rect(x + size - bevel, y, bevel, size, dark);            /* right shadow */
+}
+
+static u32int tetris_lighten(u32int c, u32int percent) {
+    u32int r = RGB_RED(c)   + (255 - RGB_RED(c))   * percent / 100;
+    u32int g = RGB_GREEN(c) + (255 - RGB_GREEN(c)) * percent / 100;
+    u32int b = RGB_BLUE(c)  + (255 - RGB_BLUE(c))  * percent / 100;
+    return RGB(r, g, b);
+}
+
+/* Blend a colour towards black (percent 0-100) */
+static u32int tetris_darken(u32int c, u32int percent) {
+    u32int r = RGB_RED(c)   * (100 - percent) / 100;
+    u32int g = RGB_GREEN(c) * (100 - percent) / 100;
+    u32int b = RGB_BLUE(c)  * (100 - percent) / 100;
+    return RGB(r, g, b);
 }
 
 void show_splashscreen(void) {
-    
-    unsigned int screen_width = 80;
-    unsigned int screen_height = 25;
-    
-    // Calculate the starting position.
-    unsigned int start_x = (screen_width - (SPLASH_LETTERS * SPLASH_WIDTH)) / 2;
-    unsigned int start_y = (screen_height - SPLASH_HEIGHT) / 2;
-    
-    for (int letter = 0; letter < SPLASH_LETTERS; letter++) {
-        
-        for (int y = 0; y < SPLASH_HEIGHT; y++) {
-            
-            for (int x = 0; x < SPLASH_WIDTH; x++) {
-                
-                if (tetris_splashscreen.tiles[letter][y][x]) {
-                    
-                    unsigned int screen_x = start_x + (letter * SPLASH_WIDTH) + x;
-                    unsigned int screen_y = start_y + y;
-                    
-                    unsigned int cursor = (screen_y * screen_width) + screen_x;
-                    
-                    fb_write_cell(cursor, 219, COLOUR.CYAN, COLOUR.BLACK);
-                }
-            }
-        }
-    }
+    /* remake for graphics mode */
 }
 
 static void tetris_wait_for_start(void) {
@@ -179,15 +191,14 @@ void tetris_board_render_border(void) {
 }
 
 
-void tetris_piece_render(const tetris_piece_t *piece) {
-    const tetromino_t *ttm = &tetrominoes[piece->type];
-
-    for (int y = 0; y < 4; y++)
-        for (int x = 0; x < 4; x++)
-            if (ttm->tiles[y][x] == 1)
-                tetris_draw_cell((int)piece->x + x, (int)piece->y + y, ttm->colour);
+void tetris_piece_render(tetris_piece_t *piece) {
+    for (int y = 0; y < 4; y++) {
+        for (int x = 0; x < 4; x++) {
+            if (!piece->tiles[y][x]) continue;      /* empty part of the 4x4: skip */
+            tetris_draw_cell(piece->x + x, piece->y + y, tetrominoes[piece->type].colour);
+        }
+    }
 }
-
 
 void tetris_board_load_mosaic(tetris_board_t *board) {
     for (unsigned int y = 0; y < HEIGHT; y++) {
@@ -197,17 +208,60 @@ void tetris_board_load_mosaic(tetris_board_t *board) {
     }
 }
 
+bool tetris_piece_fits(const tetris_board_t *board, const tetris_piece_t *piece) {
+    for (int y = 0; y < 4; y++) {
+        for (int x = 0; x < 4; x++) {
+            int bx = piece->x + x;
+            int by = piece->y + y;
+
+            if (!piece->tiles[y][x]) continue;
+            if (bx < 0 || bx >= WIDTH) return false;    /* side walls */
+            if (by >= HEIGHT) return false;             /* floor */
+            if (by >= 0 && board->cells[by][bx] != EMPTY_CELL) return false;   /* other blocks */
+        }
+    }
+
+    return true;
+}
+
+static bool tetris_try_move(const tetris_board_t *b, tetris_piece_t *p, int dx, int dy) {
+    tetris_piece_t moved = *p;
+    moved.x += dx;
+    moved.y += dy;
+    if (!tetris_piece_fits(b, &moved)) return false;
+    *p = moved;
+    return true;
+}
+
+static void tetris_rotate_ttm(const u8int src[4][4], u8int dst[4][4]) {
+    for (int y = 0; y < 4; y++)
+        for (int x = 0; x < 4; x++)
+            dst[x][3 - y] = src[y][x];
+}
+
+static void tetris_piece_init(tetris_piece_t *p, int type) {
+    p->type = type; // set the type of the piece
+    p->x = 3;       // start in the middle of the board
+    p->y = 0;       // start at the top of the board
+
+    // copy the tiles from the tetrominoes array to the piece's tiles
+    for (int y = 0; y < 4; y++)
+        for (int x = 0; x < 4; x++)
+            p->tiles[y][x] = tetrominoes[type].tiles[y][x];
+}
+
 
 void tetris_init(void) {
     display_clear();
-    display_write("TETRIS\n\nPress Enter to play\n");   /* temporary splash; the VGA one needs porting */
+    show_splashscreen();
+    tui_write("TETRIS\n\n\n\nPRESS ENTER TO PLAY");
     tetris_wait_for_start();
 
     display_clear();
 
     tetris_board_t board;
     tetris_board_init(&board);
-    tetris_board_load_mosaic(&board);
+    // tetris_board_load_mosaic(&board); // loads test pattern
 
     tetris_layout();
     tetris_board_render_border();
@@ -215,9 +269,76 @@ void tetris_init(void) {
 
     /* Placeholder until the game loop exists: Backspace returns to the shell */
     keyboard_event_t event;
-    for (;;) {
-        if (keyboard_dequeue(&event) && event.key == KEY_BACKSPACE) break;
+    bool running = true;
+    bool dirty = true; /* true so the first frame draws */
+
+    u32int drop_interval = 50;                       /* ticks between drops; lower = faster */
+    u32int last_drop = pit_get_ticks();
+
+    tetris_piece_t piece;
+    tetris_piece_init(&piece, 0);
+
+    // Game loop
+    while (running) {
+        while (keyboard_dequeue(&event)) {
+            switch (event.key) {
+                case KEY_LEFT:  if (tetris_try_move(&board, &piece, -1, 0)) dirty = true; break;
+                case KEY_RIGHT: if (tetris_try_move(&board, &piece, +1, 0)) dirty = true; break;
+                case KEY_DOWN:  if (tetris_try_move(&board, &piece,  0, +1)) dirty = true; break;
+                case KEY_UP: {
+                    tetris_piece_t rotated = piece;                      /* copies the embedded grid too */
+                    tetris_rotate_ttm(piece.tiles, rotated.tiles);       /* src = current, dst = candidate */
+
+                    if (tetris_piece_fits(&board, &rotated)) {
+                        piece = rotated;                                 
+                        dirty = true;
+                    }
+                    break;
+                }
+
+                case KEY_BACKSPACE: running = false; break;
+                default: break;
+            }
+        }
+
+        if ((u32int)(pit_get_ticks() - last_drop) >= drop_interval) {
+            last_drop = pit_get_ticks();
+
+            // Try to move the piece down. If it can't move down, lock it in place and spawn a new piece.
+            if (tetris_try_move(&board, &piece, 0, +1)) {
+                dirty = true;
+
+            } else {
+                for (int y = 0; y < 4; y++) {
+                    for (int x = 0; x < 4; x++) {
+                        if (!piece.tiles[y][x]) continue;
+                        int bx = piece.x + x;
+                        int by = piece.y + y;
+                        if (by >= 0 && by < HEIGHT && bx >= 0 && bx < WIDTH) {
+                            board.cells[by][bx] = tetrominoes[piece.type].colour;
+                        }
+                    }
+                }
+                
+                tetris_board_clear_lines(&board);
+                tetris_piece_init(&piece, 2);  /* spawn a new random piece */
+                dirty = true;
+
+                if (!tetris_piece_fits(&board, &piece)) {
+                    /* game over: stack reached the top */
+                    running = false;                     /* placeholder for now */
+                }
+            }
+        }
+
+        if (dirty) {
+            tetris_board_render(&board);     /* wipes the old piece */
+            tetris_piece_render(&piece);     /* draws it at the new position */
+            dirty = false;
+        }
+
+        __asm__ volatile("hlt"); // halt until the next interrupt (keyboard, timer, etc.)
     }
 
-    display_clear();
+    // if it reaches here, the game is over -- return to shell
 }

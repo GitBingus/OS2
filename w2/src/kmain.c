@@ -103,12 +103,12 @@ void kmain(u32int ebx) {
 
     // Initialise graphics
     if (!(graphics_init(mb_info))) {
-        kernel_panic("UH OH! GPU NO WORK");
+        kernel_panic("GPU Could not be enabled");
     }
 
     display_init(DISPLAY_MODE_GRAPHICS);
 
-    if (!(display_is_initialised())) kernel_panic("Display not initialised!!!!");
+    if (!(display_is_initialised())) kernel_panic("Display not initialised");
 
     font_init();
     tui_write("[OK] Font initialised\n");

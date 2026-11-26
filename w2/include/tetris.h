@@ -76,7 +76,7 @@ typedef struct {
     tetromino_type_t type;
     int x;
     int y;
-    unsigned char rotation;
+    u8int tiles[4][4];
 } tetris_piece_t;
 
 void tetris_init(void);
@@ -86,7 +86,7 @@ void tetris_board_clear(tetris_board_t *board, unsigned int y);
 u32int tetris_board_clear_lines(tetris_board_t *board);
 void tetris_board_render_border();
 
-void tetris_piece_render(const tetris_piece_t *piece);
+void tetris_piece_render(tetris_piece_t *piece);
 void tetris_board_render(const tetris_board_t *board);
 
 void tetris_board_load_mosaic(tetris_board_t *board);

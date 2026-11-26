@@ -127,10 +127,7 @@ void tui_move_right(void) {
 }
 
 void tui_newline(void) {
-    tui_cursor = ((tui_cursor / SCREEN_WIDTH) + 1) * SCREEN_WIDTH;
-    if (tui_cursor >= screen_size) tui_scroll();
-
-    fb_move_cursor(tui_cursor);
+    display_newline();
 }
 
 void tui_backspace(void)
