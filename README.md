@@ -1,112 +1,262 @@
-# OS2
+# OS2 — 32-bit Operating System
 
-A small 32-bit x86 operating system kernel written in C and NASM, booted by GRUB 2 (Multiboot 1) and run in QEMU. It was built for the Operating Systems 2 module at <a name="[UWE SCCT](https://github.com/uwe-scct)"></a>UWE and ends in an interactive shell with keyboard input, a timer, memory management and a set of self-test commands.
+A small 32-bit x86 operating system developed in C and NASM as part of the Operating Systems 2 module at the University of the West of England (UWE).
 
-| Directory | Contents |
-|-----------|----------|
-| `w0/` | Worksheet 0: toolchain check (C++ hello world) |
-| `w1/` | Worksheet 1: NASM exercises with a C driver, with screenshots |
-| `w2/` | Worksheet 2 onwards: the OS2 kernel (everything below) |
+OS2 is an educational operating system project focused on understanding the fundamentals of low-level programming, hardware interaction, memory management, graphics and kernel development.
+
+The project is built from the ground up, using GRUB for bootloading and QEMU for emulation and testing.
+
+---
 
 ## Features
 
-- **Boot:** Multiboot 1 header in `loader.asm`, stack setup, then `kmain()` with the Multiboot info pointer.
-- **CPU setup:** flat 3-entry GDT (null, kernel code, kernel data); PIC remapped; IDT with all 32 CPU exceptions reporting a diagnostic, plus IRQ0 and IRQ1.
-- **Display:** 80x25 VGA text mode with colour attributes, hardware cursor, newline, backspace and scrolling.
-- **Keyboard:** PS/2 Set 1 decoding (Shift, Caps Lock, arrows), IRQ1 handler feeding an event queue, `getc()` and a bounded `readline()` with in-line editing and command history.
-- **Timer:** PIT at 100 Hz giving tick count, uptime in ms and `pit_sleep_ms()`.
-- **Memory:**
-  - bitmap physical frame allocator seeded from the Multiboot memory map;
-  - paging enabled, with 128 MiB identity-mapped and `paging_map()` / `paging_unmap()`;
-  - `vm_alloc_pages()` / `vm_free_pages()` for virtual pages at `0x08000000`–`0x10000000`;
-  - a 64 KiB first-fit kernel heap (`kmalloc()` / `kfree()`).
-- **Shell:** command table with `argc`/`argv` dispatch.
+### Kernel & Hardware
 
-## Build and run
+- **32-bit x86 architecture** — Freestanding C kernel with NASM assembly routines.
+- **GRUB bootloader** — Multiboot-compatible kernel initialisation.
+- **Global Descriptor Table (GDT)** — Kernel code and data segments.
+- **Interrupt Descriptor Table (IDT)** — CPU exception and hardware interrupt handling.
+- **Programmable Interrupt Controller (PIC)** — Hardware IRQ management.
+- **Programmable Interval Timer (PIT)** — System timing and sleep functionality.
+- **Keyboard driver** — PS/2 keyboard input and key event handling.
+- **Port I/O** — Direct hardware communication through x86 I/O ports.
 
-Work from `w2/`.
+### Memory Management
 
-**macOS (Homebrew)**
+- **Physical Memory Manager (PMM)** — Physical memory frame allocation.
+- **Paging** — Page directory and page table management.
+- **Virtual Memory** — Mapping and unmapping virtual memory pages.
+- **Kernel Heap** — Dynamic memory allocation using `kmalloc()` and `kfree()`.
 
-```sh
-brew install nasm i686-elf-gcc i686-elf-binutils i686-elf-grub xorriso qemu
+### Display & Graphics
+
+OS2 includes multiple display approaches, with a display abstraction intended to provide a consistent interface across different rendering modes.
+
+- **VGA Text Mode** — Character-based rendering using VGA text memory.
+- **Graphical Framebuffer** — Direct pixel manipulation through a linear framebuffer.
+- **32-bit RGB Colour** — Full RGB colour values rather than the limited VGA text palette.
+- **Pixel Rendering** — Individual pixel drawing.
+- **Rectangle Rendering** — Filled rectangular shapes.
+- **Scrolling** — Framebuffer content scrolling.
+- **Character Rendering** — Bitmap font rendering for graphical output.
+
+- The original VGA Text Mode has been retained
+
+### User Interface
+
+- Text-based terminal interface.
+- Keyboard-driven input.
+- Character and colour management.
+- Display mode abstraction.
+- Command-line interaction.
+
+### Games & Applications
+
+**Tetris**
+
+A Tetris implementation developed as an application running within OS2.
+
+Planned and implemented game features include:
+
+- Tetromino generation and rotation.
+- Piece movement and collision detection.
+- Gravity and piece locking.
+- Line clearing and scoring.
+- Graphical board rendering.
+- Keyboard controls.
+- Splash screen and game interface.
+
+### TO COME
+
+- Sound
+- Scoring
+- Splash-screen and end-screen
+
+---
+
+## Screenshots & Development
+
+Unfortunately the screenshots I took from my Macbook don't exist anymore, but my PC screenshots do exist
+The screenshots posted here are what I deem to be the most relevant, but look in the `images/` folder for all of them!
+
+
+---
+
+## Building & Running
+
+### Requirements
+
+The following tools are required to build and run OS2:
+
+| Tool | Purpose |
+|---|---|
+| GCC (32-bit support) | C compilation |
+| NASM | Assembly compilation |
+| GNU LD | Kernel linking |
+| genisoimage | Bootable ISO generation |
+| QEMU | Operating system emulation |
+| Make | Build automation |
+
+### Linux / WSL
+
+Install the required packages:
+
+```bash
+sudo apt update
+sudo apt install build-essential gcc-multilib nasm genisoimage qemu-system-x86
 ```
 
-The Makefile must use `MKRESCUE := i686-elf-grub-mkrescue` on macOS. Use the i686 GRUB, not `x86_64-elf-grub`, which produces an EFI-only ISO that QEMU's BIOS cannot boot.
+### macOS
 
-**Linux / WSL**
+Using Homebrew:
 
-```sh
-sudo apt install build-essential gcc-multilib nasm grub-pc-bin xorriso mtools qemu-system-x86
+```bash
+brew install nasm gcc qemu cdrtools
 ```
 
-**Make targets**
+Ensure that the appropriate 32-bit x86 toolchain and linker configuration are available.
 
-| Command | Action |
-|---------|--------|
-| `make` / `make iso` | Build `os.iso` |
-| `make kernel` | Build only `iso/boot/kernel.elf` |
-| `make run` | Boot the ISO in QEMU (32 MB RAM); the QEMU monitor listens on `telnet 127.0.0.1 45454` |
-| `make run_testmode` | Boot with `-no-reboot` and log interrupts to `qemu-interrupts.log` |
-| `make rebuild` | Clean, then build |
-| `make clean` | Remove objects, kernel and ISO |
+### Compiling
 
-To boot by hand: `qemu-system-i386 -cdrom os.iso -boot d -m 32`.
+Navigate to the kernel directory:
 
-## Using the shell
+```bash
+cd w2
+```
 
-At the `>` prompt, type a command and press Enter. Left/Right move the cursor, Backspace edits at the cursor, and Up/Down recall the last 16 commands. `help` lists commands and `help <command>` describes one.
+Build the operating system:
+
+```bash
+make
+```
+
+OR 
+
+```bash
+make rebuild
+```
+
+This generates the bootable `os.iso` image.
+
+### Running
+
+Launch OS2 using QEMU:
+
+```bash
+make run
+```
+
+Alternatively, boot the ISO directly:
+
+```bash
+qemu-system-i386 -cdrom os.iso -boot d -m 32
+```
+
+### Make Commands
 
 | Command | Description |
-|---------|-------------|
-| `help [command]` | List commands or describe one |
-| `clear` | Clear the screen |
-| `version` | Show the OS2 version |
-| `echo [-n] text` | Print arguments (`-n` omits the newline) |
-| `meminfo` | Show memory totals |
-| `memtest` | Physical frame allocator test |
-| `pagetest` | Map, write, read and unmap a virtual page |
-| `vmtest` | Virtual page allocator test, including invalid and double frees |
-| `heap` | `kmalloc()` / `kfree()` test |
-| `pittest` | Show PIT ticks and uptime |
-| `sleep [-m\|-s\|-M\|-h] n` | Sleep for n ms (default), seconds, minutes or hours |
-| `keytest` | Keyboard input test; enter `ESC` to exit |
-| `div0` | Trigger a divide-by-zero exception |
-| `shutdown` | Power off (QEMU only) |
+|---|---|
+| `make` | Build the bootable ISO |
+| `make kernel` | Build the kernel ELF |
+| `make iso` | Generate the bootable ISO |
+| `make run` | Launch OS2 in QEMU |
+| `make run_testmode` | Launch QEMU in test mode |
+| `make clean` | Remove generated build files |
+| `make rebuild` | Clean and rebuild the project |
+| `make help` | Display available Make commands |
 
-## How it boots
+---
 
+## Project Structure
+
+The repository is organised into three main development stages:
+
+```text
+OS2/
+│
+├── w0/                 # Worksheet 0
+│
+├── w1/                 # Worksheet 1
+│
+└── w2/                 # Main operating system
+    │
+    ├── drivers/        # Hardware drivers and utilities
+    │
+    ├── include/        # Shared header files
+    │
+    ├── iso/            # Bootable ISO configuration
+    │
+    ├── src/
+    │   │
+    │   ├── framebuffer/ # VGA and graphical framebuffer
+    │   ├── tui/         # Terminal user interface
+    │   ├── gdt/         # Global Descriptor Table
+    │   ├── interrupts/  # Interrupt handling
+    │   ├── keyboard/    # Keyboard driver
+    │   ├── memory/      # Memory management
+    │   ├── pic/         # Programmable Interrupt Controller
+    │   ├── pit/         # Programmable Interval Timer
+    │   ├── input/       # Input handling
+    │   ├── shell/       # Command-line interface
+    │   │
+    │   ├── loader.asm   # Kernel entry point
+    │   ├── kmain.c      # Kernel initialisation
+    │   └── link.ld      # Linker script
+    │
+    ├── Makefile
+    └── os.iso
 ```
-GRUB 2 -> loader.asm (stack, push Multiboot info) -> kmain()
-  GDT -> terminal -> PMM -> PIC + IDT -> paging -> heap -> PIT -> unmask IRQ0/1 -> sti -> shell
-```
 
-Keyboard IRQs queue events; `getc()` and the shell consume them outside the interrupt handler.
+*The directory structure may evolve as development continues.*
 
-## Source layout (`w2/`)
+---
 
-```
-src/        kmain.c, loader.asm, link.ld, and one folder per subsystem:
-            gdt, interrupts, pic, pit, keyboard, input, framebuffer, tui,
-            memory (pmm, paging, heap), shell, power, acpi
-drivers/    io.c (port I/O), kstring.c (string helpers)
-include/    headers
-iso/boot/grub/   grub.cfg (copied into the ISO with the kernel)
-```
+## Development Goals
 
-## Limitations
+OS2 is an ongoing project. The broader aim is to develop an increasingly capable operating system while learning how its individual components interact.
 
-- BIOS boot only: a 32-bit Multiboot 1 kernel that expects VGA text mode, so it will not boot under UEFI.
-- Shell arguments are split on whitespace only, with no quoting or escapes.
-- `meminfo` assumes 128 MiB total, so its totals are wrong with `make run`'s 32 MB.
-- `shutdown` uses QEMU's power-off port (`0x604`), so it does nothing on real hardware.
-- `src/acpi/` is a work in progress and is excluded from the build.
-- No user mode, scheduler, file system or system calls yet.
+Areas of continued development include:
+
+- Completing and refining the graphical display subsystem.
+- Improving font rendering and graphical terminal support.
+- Expanding hardware and device driver support.
+- Improving memory management and allocation.
+- Developing additional applications and games.
+- Expanding kernel functionality and system architecture.
+
+In the long distant future, i would like to add:
+- Mouse support
+- A full GUI
+- Hardware acceleration
+- File systems
+- **MAYBE** upgrade to 64-bit mode
+
+---
+
+## Technologies
+
+- **C** — Kernel and system development.
+- **NASM** — x86 assembly.
+- **GCC** — Compilation.
+- **GNU LD** — Linking.
+- **GRUB** — Bootloading.
+- **QEMU** — Emulation and testing.
+- **Make** — Build automation.
+- **Git** — Version control.
+
+---
 
 ## References
 
-- Helin, E. and Renberg, A., *The little book about OS development* (2015) — https://littleosbook.github.io
-- *Multiboot Specification* — https://www.gnu.org/software/grub/manual/multiboot/multiboot.html
-- OSDev Wiki — https://wiki.osdev.org (GDT, IDT, PIC, PIT, PS/2 keyboard, paging, VGA text mode)
-- *Intel 64 and IA-32 Architectures Software Developer's Manual*
-- QEMU documentation — https://www.qemu.org/docs/master/
+- [The Little Book About OS Development](https://littleosbook.github.io/)
+- [OSDev Wiki](https://wiki.osdev.org/)
+- [Multiboot Specification](https://www.gnu.org/software/grub/manual/multiboot/multiboot.html)
+- [Intel 64 and IA-32 Architectures Software Developer's Manual](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html)
+- [QEMU Documentation](https://www.qemu.org/docs/master/)
+- [Sortix](https://sortix.org/)
+- [Many Wikipedia pages, but mainly](https://en.wikipedia.org/wiki/X86#32-bit)
+
+---
+
+**OS2 — University of the West of England**
+
