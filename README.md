@@ -309,6 +309,7 @@ In the long distant future, i would like to add:
 - [QEMU Documentation](https://www.qemu.org/docs/master/)
 - [Sortix](https://sortix.org/)
 - [Many Wikipedia pages, but mainly](https://en.wikipedia.org/wiki/X86#32-bit)
+- [JDH - I made an entire OS that only runs Tetris](https://www.youtube.com/watch?v=FaILnmUYS_U&t=793s)
 
 ---
 
