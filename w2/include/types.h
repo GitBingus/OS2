@@ -15,6 +15,9 @@ typedef signed int         s32int;
 typedef unsigned long long u64int;
 typedef signed long long   s64int;
 
+typedef float              f32;
+typedef double             f64;
+
 // compile time size checks
 
 _Static_assert(sizeof(u8int) == 1, "u8int must be 1 byte");

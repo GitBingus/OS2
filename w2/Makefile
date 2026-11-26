@@ -10,6 +10,7 @@ ifeq ($(UNAME_S),Darwin)
     # macOS - Apple Silicon or Intel
     CC := i686-elf-gcc
     LD := i686-elf-ld
+	AUDIO_BACKEND := coreaudio
     GENISOIMAGE := mkisofs
     QEMU_DISPLAY := cocoa,zoom-to-fit=on
     QEMU_ACCEL := tcg
@@ -19,6 +20,7 @@ else ifeq ($(UNAME_S),Linux)
     # Linux, including Windows Subsystem for Linux
     CC := gcc
     LD := ld
+	AUDIO_BACKEND := sdl
     GENISOIMAGE := genisoimage
     QEMU_DISPLAY := gtk
     QEMU_ACCEL := tcg
@@ -55,6 +57,7 @@ GRAPHICS_DIR = $(SRC_DIR)/framebuffer
 DISPLAY_DIR = $(SRC_DIR)/framebuffer
 FONT_DIR = $(SRC_DIR)/fonts
 RANDOM_DIR = $(SRC_DIR)/random
+SOUND_DIR = $(SRC_DIR)/sound
 
 GRUB_TEMPLATE = $(GRUB_DIR)/grub.cfg.in
 GRUB_CONFIG = $(GRUB_DIR)/grub.cfg
@@ -92,6 +95,7 @@ GRAPHICS_SRC = $(GRAPHICS_DIR)/graphics.c
 DISPLAY_SRC = $(DISPLAY_DIR)/display.c
 FONT_SRC = $(FONT_DIR)/font.c
 RANDOM_SRC = $(RANDOM_DIR)/random.c
+SOUND_SRC = $(SOUND_DIR)/sound.c
 
 # ACPI_SRC = $(ACPI_DIR)/acpi.c
 # TABLES_SRC = $(ACPI_DIR)/tables.c
@@ -126,6 +130,7 @@ GRAPHICS_OBJ = $(GRAPHICS_DIR)/graphics.o
 DISPLAY_OBJ = $(DISPLAY_DIR)/display.o
 FONT_OBJ = $(FONT_DIR)/font.o
 RANDOM_OBJ = $(RANDOM_DIR)/random.o
+SOUND_OBJ = $(SOUND_DIR)/sound.o
 
 # ACPI_OBJ = $(ACPI_DIR)/acpi.o
 # TABLES_OBJ = $(ACPI_DIR)/tables.o
@@ -134,7 +139,8 @@ HEAP_OBJ = $(MEM_DIR)/heap.o
 
 C_OBJECTS = $(C_OBJ) $(IO_OBJ) $(TUI_OBJ) $(FB_OBJ) $(GDT_C_OBJ) $(KB_OBJ) $(KSTRING_OBJ) \
             $(PIC_OBJ) $(INTERRUPTS_C_OBJ) $(INPUT_OBJ) $(SHELL_OBJ) $(TIMER_OBJ) $(PMM_OBJ) $(PAGING_OBJ) \
-			$(POWER_OBJ) $(PIT_OBJ) $(HEAP_OBJ) $(TETRIS_OBJ) $(GRAPHICS_OBJ) $(DISPLAY_OBJ) $(FONT_OBJ) $(RANDOM_OBJ) \
+			$(POWER_OBJ) $(PIT_OBJ) $(HEAP_OBJ) $(TETRIS_OBJ) $(GRAPHICS_OBJ) $(DISPLAY_OBJ) $(FONT_OBJ) \
+			$(SOUND_OBJ) $(RANDOM_OBJ) \
 			# $(ACPI_OBJ) $(TABLES_OBJ)
 
 OBJECTS = $(ASM_OBJ) $(GDT_ASM_OBJ) $(INTERRUPTS_ASM_OBJ) $(IDT_ASM_OBJ) $(C_OBJECTS)
@@ -208,6 +214,8 @@ iso: $(ISO)
 run: $(ISO)
 	$(QEMU) \
 		-monitor telnet:127.0.0.1:45454,server,nowait \
+		-audiodev $(AUDIO_BACKEND),id=snd0 \
+		-device sb16,audiodev=snd0 \
 		-serial stdio \
 		-boot d \
 		-cdrom $(ISO) \

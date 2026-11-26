@@ -121,6 +121,7 @@ void kmain(u32int ebx) {
 
     pic_unmask_irq(0); // enable PIT
     pic_unmask_irq(1); // enabled keyboard
+    pic_unmask_irq(5); // enable sound blaster 16
 
     __asm__ volatile("sti");
 

@@ -14,7 +14,7 @@ static struct idt_entry idt[IDT_ENTRIES];
 static struct idtr_entry idtr;
 
 
-static void (*const exception_handlers[32])(void) = {
+static void (*const exception_handlers[38])(void) = {
     interrupt_handler_0,
     interrupt_handler_1,
     interrupt_handler_2,
@@ -46,7 +46,13 @@ static void (*const exception_handlers[32])(void) = {
     interrupt_handler_28,
     interrupt_handler_29,
     interrupt_handler_30,
-    interrupt_handler_31
+    interrupt_handler_31,
+    interrupt_handler_32, // IRQ0 -- PIT
+    interrupt_handler_33, // IRQ1 -- Keyboard
+    interrupt_handler_34, // IRQ2 -- Cascade
+    interrupt_handler_35, // IRQ3 -- COM2
+    interrupt_handler_36, // IRQ4 -- COM1
+    interrupt_handler_37, // IRQ5 -- Sound Blaster 16
 };
 
 
@@ -96,6 +102,14 @@ void idt_init(void)
     idt_set_gate(
         33,
         (u32int)interrupt_handler_33,
+        0x08,
+        0x8E
+    );
+
+    // Register Sound Blaster 16 IRQ5 (vector 37)
+    idt_set_gate(
+        37,
+        (u32int)interrupt_handler_37,
         0x08,
         0x8E
     );

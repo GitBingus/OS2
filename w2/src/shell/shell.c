@@ -9,6 +9,7 @@
 #include "pit.h"
 #include "heap.h"
 #include "tetris.h"
+#include "sound.h"
 
 #define SHELL_BUFFER 128
 #define SHELL_MAX_ARGS 16
@@ -19,6 +20,12 @@
 
 static char history[SHELL_HISTORY_SIZE][SHELL_BUFFER_SIZE];
 static u32int history_count = 0;
+
+static u32int sound_tests_passed = 0;
+static u32int sound_tests_failed = 0;
+
+static u32int dma_tests_passed = 0;
+static u32int dma_tests_failed = 0;
 
 static void shell_help(int argc, cstring argv[]);
 static void shell_clear(int argc, cstring argv[]);
@@ -32,8 +39,9 @@ static void sleep_test(int argc, cstring argv[]);
 static void heap_test(int argc, cstring argv[]);
 static void shell_cmd_vmtest(int argc, cstring argv[]);
 static void about(int argc, cstring argv[]);
-
+static void cmd_soundtest(int argc, cstring argv[]);
 static void tetris(int argc, cstring argv[]);
+static void cmd_pmm_dma_test(int argc, cstring argv[]);
 
 static const shell_command_t commands[] = {
     {"help", "Show available commands, use with 'help `<command>`'", shell_help},
@@ -51,8 +59,249 @@ static const shell_command_t commands[] = {
     {"heap", "Tests the heap memory manager, use with 'heap'", heap_test},
     {"vmtest", "Tests the virtual memory manager, use with 'vmtest'", shell_cmd_vmtest},
     {"about", "Displays information about OS2, use with 'about'", about},
-    {"tetris", "Starts TETRIS", tetris}
+    {"tetris", "Starts TETRIS", tetris},
+    {"soundtest", "Runs the sound system test suite", cmd_soundtest},
+    {"pmm_dma_test", "Runs the PMM DMA allocation test suite", cmd_pmm_dma_test},
 };
+
+static void dma_test_result(cstring name, bool passed) {
+    tui_write(name);
+
+    if (passed) {
+        tui_write(" [PASS]\n");
+        dma_tests_passed++;
+    } else {
+        tui_write(" [FAIL]\n");
+        dma_tests_failed++;
+    }
+}
+
+static void test_dma_zero_allocation(void) {
+    u32int result = pmm_alloc_dma_frames(0);
+
+    dma_test_result("Zero-frame allocation", result == 0);
+}
+
+static void test_dma_allocation(void) {
+    u32int count = 4;
+    u32int address = pmm_alloc_dma_frames(count);
+
+    bool passed = address != 0;
+
+    if (passed) {
+        passed &= address % PMM_FRAME_SIZE == 0;
+        passed &= address + (count * PMM_FRAME_SIZE) <= 0x01000000;
+        passed &= (address & 0xFFFF) +
+                  (count * PMM_FRAME_SIZE) <= 0x10000;
+
+        for (u32int i = 0; i < count; i++) {
+            if (!pmm_free_frame(address + (i * PMM_FRAME_SIZE))) {
+                passed = false;
+            }
+        }
+    }
+
+    dma_test_result("DMA allocation constraints", passed);
+}
+
+static void test_dma_contiguity(void) {
+    u32int count = 4;
+    u32int address = pmm_alloc_dma_frames(count);
+
+    bool passed = address != 0;
+
+    if (passed) {
+        for (u32int i = 1; i < count; i++) {
+            u32int expected = address + (i * PMM_FRAME_SIZE);
+
+            if (expected != address + (i * PMM_FRAME_SIZE)) {
+                passed = false;
+                break;
+            }
+        }
+
+        for (u32int i = 0; i < count; i++) {
+            pmm_free_frame(address + (i * PMM_FRAME_SIZE));
+        }
+    }
+
+    dma_test_result("Physical frame contiguity", passed);
+}
+
+static void test_dma_free(void) {
+    u32int count = 4;
+    u32int address = pmm_alloc_dma_frames(count);
+
+    if (address == 0) {
+        dma_test_result("DMA frame freeing", false);
+        return;
+    }
+
+    bool passed = true;
+
+    for (u32int i = 0; i < count; i++) {
+        if (!pmm_free_frame(address + (i * PMM_FRAME_SIZE))) {
+            passed = false;
+        }
+    }
+
+    dma_test_result("DMA frame freeing", passed);
+}
+
+void cmd_pmm_dma_test(int argc, cstring argv[]) {
+    (void)argc;
+    (void)argv;
+    
+    dma_tests_passed = 0;
+    dma_tests_failed = 0;
+
+    tui_write("=== PMM DMA Tests ===\n\n");
+
+    test_dma_zero_allocation();
+    test_dma_allocation();
+    test_dma_contiguity();
+    test_dma_free();
+
+    tui_write("\n=== Test Results ===\n");
+
+    // Print your counters using your existing integer formatting function
+    // or tui_write() helper.
+
+    if (dma_tests_failed == 0) {
+        tui_write("All DMA allocation tests passed!\n");
+    } else {
+        tui_write("Some DMA allocation tests failed.\n");
+    }
+}
+
+static void sound_test_result(cstring name, bool passed) {
+    tui_write(name);
+
+    if (passed) {
+        tui_write(" [PASS]\n");
+        sound_tests_passed++;
+    } else {
+        tui_write(" [FAIL]\n");
+        sound_tests_failed++;
+    }
+}
+
+static void sound_test_summary(void) {
+    tui_write("\nSound test suite complete.\n");
+    tui_write("Check individual results above for failures.\n");
+}
+
+static void sound_test_note(void) {
+    sound_note(0, OCTAVE_4, NOTE_C);
+
+    sound_test_result(
+        "sound_note",
+        notes[0] == ((OCTAVE_4 << 4) | NOTE_C)
+    );
+}
+
+static void sound_test_volume(void) {
+    sound_volume(0, 128);
+
+    sound_test_result(
+        "sound_volume",
+        volumes[0] == 128
+    );
+}
+
+static void sound_test_master(void) {
+    sound_master(200);
+
+    sound_test_result(
+        "sound_master",
+        volume_master == 200
+    );
+}
+
+static void sound_test_wave(void) {
+    sound_wave(0, WAVE_TRIANGLE);
+
+    sound_test_result(
+        "sound_wave",
+        waves[0] == WAVE_TRIANGLE
+    );
+}
+
+static void sound_test_music_init(void) {
+    music_init();
+
+    bool passed =
+        waves[0] == WAVE_TRIANGLE &&
+        waves[1] == WAVE_NOISE &&
+        waves[2] == WAVE_TRIANGLE &&
+        waves[3] == WAVE_TRIANGLE &&
+        volumes[0] == 255 &&
+        volumes[1] == 128 &&
+        volumes[2] == 196 &&
+        volumes[3] == 196;
+
+    sound_test_result("music_init", passed);
+}
+
+static void sound_test_sb16_version(void) {
+    bool passed = sb16_get_version(&major, &minor);
+
+    // SB16 DSP versions are normally 4.x
+    passed = passed && major == 4;
+
+    sound_test_result("SB16 DSP version", passed);
+}
+
+static void sound_test_sb16_mixer(void) {
+    // Save the original master volume
+    u8int original = sb16_mixer_read(0x22);
+
+    // Write a test value
+    sb16_mixer_write(0x22, 0xA5);
+
+    // Read it back
+    u8int result = sb16_mixer_read(0x22);
+
+    // Restore original value
+    sb16_mixer_write(0x22, original);
+
+    sound_test_result(
+        "SB16 mixer read/write",
+        result == 0xA5
+    );
+}
+
+static void cmd_soundtest(int argc, cstring argv[]) {
+    sound_tests_passed = 0;
+    sound_tests_failed = 0;
+
+    (void)argc;
+    (void)argv;
+
+    tui_write("=== Sound System Tests ===\n\n");
+
+    tui_write("-- Software Tests --\n");
+
+    sound_test_note();
+    sound_test_volume();
+    sound_test_master();
+    sound_test_wave();
+    sound_test_music_init();
+
+    tui_write("\n-- Sound Blaster 16 Tests --\n");
+
+    if (sb16_reset()) {
+        sound_test_result("SB16 DSP reset", true);
+
+        sound_test_sb16_version();
+        sound_test_sb16_mixer();
+    } else {
+        sound_test_result("SB16 DSP reset", false);
+        tui_write("Skipping remaining hardware tests.\n");
+    }
+
+    sound_test_summary();
+}
 
 static void tetris(int argc, cstring argv[]) {
     (void)argc;

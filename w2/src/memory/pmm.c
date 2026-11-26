@@ -3,7 +3,6 @@
 #include "kstring.h"
 #include "tui.h"
 
-#define PMM_FRAME_SIZE 4096
 #define PMM_MAX_MEMORY (128 * 1024 * 1024)
 #define PMM_MAX_FRAMES (PMM_MAX_MEMORY / PMM_FRAME_SIZE)
 
@@ -14,13 +13,52 @@ static void pmm_set_frame(u32int frame);
 static void pmm_clear_frame(u32int frame);
 static bool pmm_test_frame(u32int frame);
 u32int pmm_get_free_frames(void);
+u32int pmm_alloc_frames(u32int count);
 u32int pmm_alloc_frame(void);
+u32int pmm_alloc_dma_frames(u32int count);
 bool pmm_free_frame(u32int address);
 
 static bool pmm_initialized = false;
-
 extern char kernel_start;
 extern char kernel_end;
+
+u32int pmm_alloc_dma_frames(u32int count) {
+    if (!pmm_initialized || count == 0)
+        return 0;
+
+    // Implementation for allocating DMA frames
+
+    u32int consecutive = 0;
+    u32int start_frame = 0;
+
+    for (u32int i = 0; i < PMM_MAX_FRAMES; i++) {
+        u32int address = i * PMM_FRAME_SIZE;
+
+        // Check if the frame is free and meets DMA constraints
+        if (!pmm_test_frame(i) && address < 0x01000000 && (address & 0xFFFF) + (count * PMM_FRAME_SIZE) <= 65536) {
+            if (consecutive == 0) {
+                start_frame = i;
+            }
+            consecutive++;
+
+            if (consecutive == count) {
+                // Mark the frames as allocated
+                for (u32int j = start_frame; j < start_frame + count; j++) {
+                    pmm_set_frame(j);
+
+                    u32int byte_index = j / 8;
+                    u32int bit_index = j % 8;
+                    pmm_allocated_bitmap[byte_index] |= (u8int)(1u << bit_index);
+                }
+
+                return start_frame * PMM_FRAME_SIZE;
+            }
+        } else {
+            consecutive = 0; // Reset if a frame is not suitable
+        }
+    }
+    return 0; // Return 0 if no suitable region is found
+}
 
 bool pmm_free_frame(u32int address) {
     if (!pmm_initialized)
@@ -163,6 +201,41 @@ static void pmm_mark_region_free(u64int base, u64int length) {
     for (u64int i = first_frame; i < end_frame; i++) {
         pmm_clear_frame((u32int)i);
     }
+}
+
+u32int pmm_alloc_frames(u32int count) {
+    if (!pmm_initialized || count == 0)
+        return 0;
+
+    u32int consecutive = 0;
+    u32int start_frame = 0;
+
+    for (u32int i = 0; i < PMM_MAX_FRAMES; i++) {
+        if (!pmm_test_frame(i)) {
+            if (consecutive == 0) {
+                start_frame = i;
+            }
+            consecutive++;
+
+            if (consecutive == count) {
+                // Mark the frames as allocated
+                for (u32int j = start_frame; j < start_frame + count; j++) {
+                    pmm_set_frame(j);
+
+                    u32int byte_index = j / 8;
+                    u32int bit_index = j % 8;
+
+                    pmm_allocated_bitmap[byte_index] |=
+                        (u8int)(1u << bit_index);
+                }
+
+                return start_frame * PMM_FRAME_SIZE;
+            }
+        } else {
+            consecutive = 0;
+        }
+    }
+    return 0; // No suitable range exists
 }
 
 u32int pmm_alloc_frame(void) {

@@ -38,6 +38,10 @@ extern void interrupt_handler_30(void);
 extern void interrupt_handler_31(void);
 extern void interrupt_handler_32(void);
 extern void interrupt_handler_33(void);
+extern void interrupt_handler_34(void);
+extern void interrupt_handler_35(void);
+extern void interrupt_handler_36(void);
+extern void interrupt_handler_37(void);
 
 void exception_handler(u32int exception_number);
 
