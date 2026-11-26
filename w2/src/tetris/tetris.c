@@ -1,6 +1,7 @@
 #include "tetris.h"
 #include "display.h"
 #include "pit.h"
+#include "random.h"
 
 #define SPLASH_LETTERS 6
 #define SPLASH_WIDTH   9
@@ -275,8 +276,10 @@ void tetris_init(void) {
     u32int drop_interval = 50;                       /* ticks between drops; lower = faster */
     u32int last_drop = pit_get_ticks();
 
+    srand(pit_get_ticks());
+
     tetris_piece_t piece;
-    tetris_piece_init(&piece, 0);
+    tetris_piece_init(&piece, rand_range(0, 6));   /* spawn a random piece */
 
     // Game loop
     while (running) {
@@ -321,7 +324,7 @@ void tetris_init(void) {
                 }
                 
                 tetris_board_clear_lines(&board);
-                tetris_piece_init(&piece, 2);  /* spawn a new random piece */
+                tetris_piece_init(&piece, rand_range(0, 6));  /* spawn a new random piece */
                 dirty = true;
 
                 if (!tetris_piece_fits(&board, &piece)) {
