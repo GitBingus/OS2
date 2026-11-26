@@ -1,5 +1,11 @@
 #ifndef INCLUDE_IO_H
 #define INCLUDE_IO_H
+#include "types.h"
+
+void serial_init(void);
+void serial_write_char(char c);
+void serial_write(const char *str);
+void serial_write_u32(u32int value);
 
 #include "types.h"
 

@@ -13,6 +13,7 @@
 #include "graphics.h"
 #include "display.h"
 #include "font.h"
+#include "sound.h"
 
 /*
     Kernel panic: display an error and halt.
@@ -92,6 +93,21 @@ void kmain(u32int ebx) {
 
     tui_write("[OK] Interrupt descriptor table\n");
 
+    // Initialise the sound system
+    sound_init();
+
+    tui_write("[OK] Sound Blaster 16 initialised\n");
+
+    if (!sb16_init()) {
+        kernel_panic("Failed to initialise Sound Blaster 16");
+    }
+
+    if (!sb16_dma_init()) {
+        kernel_panic("Failed to initialise DMA");
+    }
+
+    sb16_generate_test_tone();
+
     // Initialise virtual memory and enable paging
     paging_init();
     heap_init();
@@ -115,17 +131,47 @@ void kmain(u32int ebx) {
 
     if (display_get_mode() != DISPLAY_MODE_GRAPHICS) {
         graphics_clear(255, 0, 0);   /* red screen = wrong mode */
+        for (;;) __asm__ volatile("hlt");
     }
 
     pit_init(PIT_DEFAULT_FREQUENCY);
 
     pic_unmask_irq(0); // enable PIT
     pic_unmask_irq(1); // enabled keyboard
-    pic_unmask_irq(5); // enable sound blaster 16
+    // pic_unmask_irq(5); // enable sound blaster 16
 
-    __asm__ volatile("sti");
+    __asm__ volatile("sti"); // enable interrupts
+
+    serial_init();
+    serial_write("OS2 serial debugging started\n");
 
     tui_write("[OK] PIT and keyboard interrupts enabled\n");
+
+    serial_write("A: Before playback\n");
+
+    bool result = sb16_start_playback();
+
+    serial_write("B: After playback\n");
+
+    if (result) {
+        serial_write("C: Playback returned true\n");
+    }
+
+    serial_write("SB16 debug stage: ");
+    serial_write_u32(sb16_debug_stage);
+    serial_write("\n");
+
+    serial_write("SB16 write value: ");
+    serial_write_u32(sb16_write_value);
+    serial_write("\n");
+
+    serial_write("DSP write status: ");
+    serial_write_u32(sb16_last_write_status);
+    serial_write("\n");
+
+    serial_write("SB16 write attempts: ");
+    serial_write_u32(sb16_write_attempts);
+    serial_write("\n");
 
     // tui_write("Testing tetrominoes:\n");
     // tetromino_debug(&tetrominoes[TETROMINO_TYPE_I]);
@@ -136,7 +182,9 @@ void kmain(u32int ebx) {
     // tetromino_debug(&tetrominoes[TETROMINO_TYPE_S]);
     // tetromino_debug(&tetrominoes[TETROMINO_TYPE_T]);
 
+    serial_write("D: Before shell_init\n");
     shell_init();
+    serial_write("E: After shell_init\n");
 
     // Shell should normally never return
     kernel_panic("Shell unexpectedly returned");

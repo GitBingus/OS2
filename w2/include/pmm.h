@@ -15,6 +15,7 @@ u32int pmm_alloc_frame(void);
 u32int pmm_alloc_frames(u32int count);
 u32int pmm_alloc_dma_frames(u32int count);
 bool pmm_free_frame(u32int address);
+bool pmm_free_dma_frames(u32int address, u32int count);
 void pmm_mark_region_used(u64int base, u64int length);
 
 #endif

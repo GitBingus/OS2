@@ -27,8 +27,8 @@
 #define SB16_SAMPLE_RATE          22050
 #define SB16_PCM_MODE             0x00
 
-u32int dma_physical_address;
-u8int *dma_buffer;
+extern u32int dma_physical_address;
+extern u8int *dma_buffer;
 
 #define MIXER_IRQ       0x5
 
@@ -378,6 +378,14 @@ struct MusicTrack {
     u8int channel;
 };
 
+extern volatile u32int sb16_debug_stage;
+extern volatile u8int sb16_last_write_status;
+extern volatile u32int sb16_write_attempts;
+extern volatile u8int sb16_write_value;
+
+bool sb16_start_playback(void); // Start playback of the Sound Blaster 16 device
+void sb16_generate_test_tone(void); // Generate a test tone for the Sound Blaster 16 device
+void sound_blaster_irq_handler(void); // Handle the Sound Blaster 16 interrupt
 bool sb16_init(void); // Initialise the Sound Blaster 16 device
 bool sb16_reset(void); // Reset the Sound Blaster 16 device
 bool sb16_write(u8int value); // Write a value to the Sound Blaster 16 device

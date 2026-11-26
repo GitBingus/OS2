@@ -1,4 +1,11 @@
 #include "sound.h"
+#include "pmm.h"
+#include "pic.h"
+#include "math.h"
+#include "tui.h"
+#include "io.h"
+
+volatile u32int sb16_debug_stage = 0;
 
 u8int volume_master;     
 u8int volumes[NUM_NOTES];
@@ -6,6 +13,9 @@ u8int notes[NUM_NOTES];
 u8int waves[NUM_NOTES];
 
 u8int major, minor;
+
+u32int dma_physical_address;
+u8int *dma_buffer;
 
 const f64 NOTES[NUM_OCTAVES * OCTAVE_SIZE] = {
     // O1
@@ -107,6 +117,28 @@ const f64 NOTES[NUM_OCTAVES * OCTAVE_SIZE] = {
     3951.0664100489994,
 };
 
+#define TEST_FREQUENCY 440
+#define TEST_DURATION  1
+
+void sb16_generate_test_tone(void) {
+    for (u32int i = 0; i < DMA_BUFFER_SIZE; i++) {
+        dma_buffer[i] = (i % 50 < 25) ? 192 : 64;
+        serial_write("DMA buffer address: ");
+        serial_write_u32(dma_physical_address);
+
+        serial_write("\nFirst sample: ");
+        serial_write_u32(dma_buffer[0]);
+
+        serial_write("\nSecond sample: ");
+        serial_write_u32(dma_buffer[25]);
+
+        serial_write("\nThird sample: ");
+        serial_write_u32(dma_buffer[50]);
+
+        serial_write("\n");
+    }
+}
+
 void music_init() {
     sound_wave(0, WAVE_TRIANGLE);
     sound_volume(0, 255);
@@ -139,7 +171,15 @@ void sound_wave(u8int index, u8int wave) {
 
 // Initialise the sound system
 void sound_init() {
+    volume_master = 255;
 
+    for (u8int i = 0; i < NUM_NOTES; i++) {
+        volumes[i] = 0;
+        notes[i] = 0;
+        waves[i] = WAVE_SQUARE;
+    }
+
+    music_init();
 }
 
 static inline void io_wait(void) {
@@ -172,11 +212,23 @@ bool sb16_reset(void) {
 }
 
 // Write a value to the Sound Blaster 16 device
+volatile u8int sb16_last_write_status = 0;
+volatile u32int sb16_write_attempts = 0;
+volatile u8int sb16_write_value = 0;
+
 bool sb16_write(u8int value) {
     u32int timeout = 100000;
 
+    sb16_write_value = value;
+    sb16_write_attempts = 0;
+
     while (timeout--) {
-        if (!(inb(SB16_DSP_STATUS) & 0x80)) {
+        sb16_write_attempts++;
+
+        u8int status = inb(SB16_DSP_STATUS);
+        sb16_last_write_status = status;
+
+        if (!(status & 0x80)) {
             outb(SB16_DSP_WRITE, value);
             return true;
         }
@@ -258,6 +310,59 @@ bool sb16_init() {
     return true;
 }
 
+bool sb16_start_playback(void) {
+    sb16_debug_stage++;
+    serial_write("[DEBUG] Entered sb16_start_playback\n");
+    u16int count = DMA_BUFFER_SIZE - 1;
+
+    if (!sb16_set_sample_rate(SB16_SAMPLE_RATE)) {
+        serial_write("[FAIL] Sample rate\n");
+        return false;
+    }
+
+    sb16_debug_stage++;
+
+    if (!sb16_write(SB16_DSP_SPEAKER_ON)) {
+        serial_write("[FAIL] Speaker on\n");
+        return false;
+    }
+
+    sb16_debug_stage++;
+
+    outb(DMA_MASK, DMA_CHANNEL);
+
+    sb16_debug_stage++;
+
+    if (!sb16_write(SB16_DSP_DMA8_AUTO_OUT)) {
+        serial_write("[FAIL] DMA playback command\n");
+        return false;
+    }
+
+    sb16_debug_stage++;
+
+    if (!sb16_write(SB16_PCM_MODE)) {
+        serial_write("[FAIL] PCM mode\n");
+        return false;
+    }
+
+    sb16_debug_stage++;
+
+    if (!sb16_write((u8int)(count & 0xFF))) {
+        serial_write("[FAIL] Count low\n");
+        return false;
+    }
+
+    sb16_debug_stage++;
+
+    if (!sb16_write((u8int)(count >> 8))) {
+        serial_write("[FAIL] Count high\n");
+        return false;
+    }
+
+    serial_write("[PASS] sb16_start_playback worked\n");
+    return true;
+}
+
 bool sb16_dma_init(void) {
     // Allocate a DMA buffer
     dma_buffer = (u8int *)pmm_alloc_dma_frames(DMA_PAGE_COUNT);
@@ -290,9 +395,14 @@ bool sb16_dma_init(void) {
     return true;
 }
 
+void sound_blaster_irq_handler(void) {
+    inb(SB16_DSP_READ_STAT); // Acknowledge 8-bit SB16 interrupt
+    pic_acknowledge(5);
+}
+
 void sb16_dma_free(void) {
     if (dma_buffer) {
-        pmm_free_dma_frames(dma_buffer, DMA_PAGE_COUNT);
+        pmm_free_dma_frames((u32int)dma_buffer, DMA_PAGE_COUNT);
         dma_buffer = NULL;
         dma_physical_address = 0;
     }

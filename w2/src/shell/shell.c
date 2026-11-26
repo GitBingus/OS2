@@ -10,6 +10,7 @@
 #include "heap.h"
 #include "tetris.h"
 #include "sound.h"
+#include "io.h"
 
 #define SHELL_BUFFER 128
 #define SHELL_MAX_ARGS 16
@@ -960,30 +961,41 @@ void shell_execute(string input)
     tui_write("\n");
 }
 
-void shell_init(void)
-{
+void shell_init(void) {
+    serial_write("S1: shell_init entered\n");
     char buffer[SHELL_BUFFER_SIZE];
+    (void)buffer;
 
     tui_write("Welcome to OS2!\n");
 
     for (;;)
     {
         tui_write("> ");
+        serial_write("S2: shell_init continuing\n");
 
-        input_action_t action = readline_history(
-            buffer,
-            sizeof(buffer),
-            shell_history_get,
-            shell_history_count());
+        serial_write("Waiting for keyboard input\n");
 
-        if (action == INPUT_SUBMITTED)
-        {
-            if (buffer[0] != '\0')
-            {
-                shell_history_add(buffer);
-                shell_execute(buffer);
-            }
+        while (1) {
+            __asm__ volatile ("hlt");
         }
+
+        // input_action_t action = readline_history(
+        //     buffer,
+        //     sizeof(buffer),
+        //     shell_history_get,
+        //     shell_history_count());
+
+        serial_write("S3: shell_init continuing\n");
+
+        // if (action == INPUT_SUBMITTED)
+        // {
+        //     if (buffer[0] != '\0')
+        //     {
+        //         shell_history_add(buffer);
+        //         shell_execute(buffer);
+        //     }
+        // }
+        serial_write("S4: shell_init continuing\n");
     }
 }
 

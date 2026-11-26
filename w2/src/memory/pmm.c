@@ -17,10 +17,41 @@ u32int pmm_alloc_frames(u32int count);
 u32int pmm_alloc_frame(void);
 u32int pmm_alloc_dma_frames(u32int count);
 bool pmm_free_frame(u32int address);
+bool pmm_free_dma_frames(u32int address, u32int count);
 
 static bool pmm_initialized = false;
 extern char kernel_start;
 extern char kernel_end;
+
+bool pmm_free_dma_frames(u32int address, u32int count) {
+    if (!pmm_initialized || count == 0)
+        return false;
+
+    if (address % PMM_FRAME_SIZE != 0)
+        return false;
+
+    u32int start_frame = address / PMM_FRAME_SIZE;
+
+    if (start_frame >= PMM_MAX_FRAMES ||
+        count > PMM_MAX_FRAMES - start_frame)
+        return false;
+
+    // Verify every frame is allocated before freeing anything.
+    for (u32int i = 0; i < count; i++) {
+        u32int frame = start_frame + i;
+
+        if (!pmm_test_frame(frame))
+            return false;
+    }
+
+    // Release each frame.
+    for (u32int i = 0; i < count; i++) {
+        if (!pmm_free_frame((start_frame + i) * PMM_FRAME_SIZE))
+            return false;
+    }
+
+    return true;
+}
 
 u32int pmm_alloc_dma_frames(u32int count) {
     if (!pmm_initialized || count == 0)

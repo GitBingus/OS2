@@ -49,9 +49,6 @@ static void (*const exception_handlers[38])(void) = {
     interrupt_handler_31,
     interrupt_handler_32, // IRQ0 -- PIT
     interrupt_handler_33, // IRQ1 -- Keyboard
-    interrupt_handler_34, // IRQ2 -- Cascade
-    interrupt_handler_35, // IRQ3 -- COM2
-    interrupt_handler_36, // IRQ4 -- COM1
     interrupt_handler_37, // IRQ5 -- Sound Blaster 16
 };
 

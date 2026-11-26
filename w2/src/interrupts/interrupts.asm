@@ -7,6 +7,7 @@ global interrupt_handler_37
 extern pit_handler
 extern keyboard_irq_handler
 extern exception_handler
+extern sound_blaster_irq_handler
 
 ;       Vector	    Hex	    Exception	                            Error code?
 ;       0	        0x00	Divide Error (#DE)	                    No
