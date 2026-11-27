@@ -157,12 +157,17 @@ void kmain(u32int ebx) {
     if (!sb16_init()) kernel_panic("SB16 init failed");
     if (!sb16_dma_init()) kernel_panic("DMA init failed");
 
-    sb16_generate_test_tone();
-
     pic_unmask_irq(0);
     pic_unmask_irq(1);
 
     __asm__ volatile("sti");
+
+    sound_init();
+    sound_render_buffer();
+
+    if (!sb16_start_playback()) {
+        kernel_panic("SB16 playback failed");
+    }
 
     serial_write("SB16 debug stage: ");
     serial_write_u32(sb16_debug_stage);

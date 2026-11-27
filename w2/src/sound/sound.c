@@ -6,6 +6,9 @@
 #include "io.h"
 
 volatile u32int sb16_debug_stage = 0;
+#define MUSIC_TRACK_COUNT 4
+
+static struct MusicTrack music_tracks[MUSIC_TRACK_COUNT];
 
 u8int volume_master;     
 u8int volumes[NUM_NOTES];
@@ -16,6 +19,9 @@ u8int major, minor;
 
 u32int dma_physical_address;
 u8int *dma_buffer;
+
+static u16int sound_phase[NUM_NOTES];
+static u16int sound_noise_lfsr[NUM_NOTES];
 
 const f64 NOTES[NUM_OCTAVES * OCTAVE_SIZE] = {
     // O1
@@ -120,20 +126,24 @@ const f64 NOTES[NUM_OCTAVES * OCTAVE_SIZE] = {
 #define TEST_FREQUENCY 440
 #define TEST_DURATION  1
 
-void sb16_generate_test_tone(void) {
-    serial_write_u32((u32int)dma_buffer);
-    serial_write("\n");
-
-    for (u32int i = 0; i < DMA_BUFFER_SIZE; i++) {
-        dma_buffer[i] = (i % 50 < 25) ? 192 : 64;
-    }
-    serial_write_u32(dma_buffer[0]);
-    serial_write("\n");
+static void music_track_setup(
+    struct MusicTrack *track,
+    const struct Note *sequence,
+    u32int length,
+    u8int channel
+) {
+    track->sequence = sequence;
+    track->length = length;
+    track->position = 0;
+    track->ticks_remaining = 0;
+    track->channel = channel;
 }
 
 void music_init() {
-    sound_wave(0, WAVE_TRIANGLE);
-    sound_volume(0, 255);
+    // Initialise the music tracks with the predefined sequences
+    sound_wave(0, WAVE_NOISE);
+    sound_volume(0, 96);
+    sound_note(0, OCTAVE_4, NOTE_A);
 
     sound_wave(1, WAVE_NOISE);
     sound_volume(1, 128);
@@ -143,6 +153,36 @@ void music_init() {
 
     sound_wave(3, WAVE_TRIANGLE);
     sound_volume(3, 196);
+
+    // Setup the music tracks with their respective sequences and channels
+
+    music_track_setup(
+        &music_tracks[0],
+        CHORUS_MELODY,
+        CHORUS_MELODY_LENGTH,
+        0
+    );
+
+    music_track_setup(
+        &music_tracks[1],
+        CHORUS_BASS,
+        CHORUS_BASS_LENGTH,
+        1
+    );
+
+    music_track_setup(
+        &music_tracks[2],
+        CHORUS_HARMONY,
+        CHORUS_HARMONY_LENGTH,
+        2
+    );
+
+    music_track_setup(
+        &music_tracks[3],
+        CHORUS_SNARE,
+        CHORUS_SNARE_LENGTH,
+        3
+    );
 }
 
 void sound_note(u8int index, u8int octave, u8int note) {
@@ -169,6 +209,11 @@ void sound_init() {
         volumes[i] = 0;
         notes[i] = 0;
         waves[i] = WAVE_SQUARE;
+        sound_noise_lfsr[i] = (u16int)(0xACE1u ^ (i * 0x1234u)); // Initialize LFSR with a non-zero value for each channel
+
+        if (sound_noise_lfsr[i] == 0) { // Ensure LFSR is not zero
+            sound_noise_lfsr[i] = 1;
+        }
     }
 
     music_init();
@@ -294,7 +339,7 @@ bool sb16_init() {
     }
 
     // configure mixer settings, e.g., set master volume, enable channels, etc.
-    sb16_mixer_write(0x22, 0xFF); // Set master volume to maximum
+    sb16_mixer_write(0x22, 0xAA); // Set master volume to maximum
     sb16_mixer_write(0x24, 0xFF); // Enable all channels
 
     // reports if initialization was successful or not
@@ -303,7 +348,6 @@ bool sb16_init() {
 }
 
 bool sb16_start_playback(void) {
-    sb16_debug_stage++;
     serial_write("[DEBUG] Entered sb16_start_playback\n");
     u16int count = DMA_BUFFER_SIZE - 1;
 
@@ -312,39 +356,27 @@ bool sb16_start_playback(void) {
         return false;
     }
 
-    sb16_debug_stage++;
-
     if (!sb16_write(SB16_DSP_SPEAKER_ON)) {
         serial_write("[FAIL] Speaker on\n");
         return false;
     }
 
-    sb16_debug_stage++;
-
     outb(DMA_MASK, DMA_CHANNEL);
-
-    sb16_debug_stage++;
 
     if (!sb16_write(SB16_DSP_DMA8_AUTO_OUT)) {
         serial_write("[FAIL] DMA playback command\n");
         return false;
     }
 
-    sb16_debug_stage++;
-
     if (!sb16_write(SB16_PCM_MODE)) {
         serial_write("[FAIL] PCM mode\n");
         return false;
     }
 
-    sb16_debug_stage++;
-
     if (!sb16_write((u8int)(count & 0xFF))) {
         serial_write("[FAIL] Count low\n");
         return false;
     }
-
-    sb16_debug_stage++;
 
     if (!sb16_write((u8int)(count >> 8))) {
         serial_write("[FAIL] Count high\n");
@@ -390,6 +422,10 @@ bool sb16_dma_init(void) {
     // Set page
     outb(DMA_PAGE, (u8int)(dma_physical_address >> 16));
 
+    for (u32int i = 0; i < DMA_BUFFER_SIZE; i++) { // Initialize the DMA buffer to silence (0x80 for 8-bit unsigned audio)
+        dma_buffer[i] = 0x80;
+    }
+
     return true;
 }
 
@@ -417,4 +453,96 @@ bool sb16_set_sample_rate(u16int rate) {
         return false;
 
     return true;
+}
+
+// Generate a test tone for the Sound Blaster 16 device 
+static int sound_wave_sample(
+    u8int channel,
+    u8int wave,
+    u16int phase
+) {
+    switch (wave) {
+        case WAVE_SQUARE: // Generate a square wave sample
+            return phase < 32768 ? 64 : -64;
+
+        case WAVE_TRIANGLE: // Generate a triangle wave sample
+            if (phase < 32768) {
+                return -64 + ((int)phase * 128 / 32768);
+            } else {
+                return 64 - ((int)(phase - 32768) * 128 / 32768);
+            }
+
+        case WAVE_SIN:  // Generate a sine wave sample
+            int x = phase < 32768u
+                ? (int)phase
+                : (int)phase - 65536;
+
+            int abs_x = x < 0 ? -x : x;
+
+            return (x * (32768 - abs_x)) / 4194304;
+        
+        case WAVE_NOISE: 
+            u16int feedback = (
+                sound_noise_lfsr[channel] ^
+                (sound_noise_lfsr[channel] >> 2) ^
+                (sound_noise_lfsr[channel] >> 3) ^
+                (sound_noise_lfsr[channel] >> 5)
+            ) & 1u;
+
+            sound_noise_lfsr[channel] =
+                (sound_noise_lfsr[channel] >> 1) |
+                (feedback << 15);
+
+            return (sound_noise_lfsr[channel] & 1u) ? 64 : -64;
+        
+
+        default:
+            return 0;
+    }
+}
+
+void sound_render_buffer(void) {
+    if (dma_buffer == NULL) {
+        return;
+    }
+
+    u8int encoded_note = notes[0];
+
+    u8int octave = encoded_note >> 4;
+    u8int note = encoded_note & 0x0F;
+
+    // Validate octave and note values
+    if (octave >= NUM_OCTAVES || note > NOTE_NONE) {
+        return;
+        }
+
+    if (note == NOTE_NONE) {
+        for (u32int i = 0; i < DMA_BUFFER_SIZE; i++) {
+            dma_buffer[i] = 0x80;
+        }
+        return;
+    }
+
+    // Calculate the frequency for the given note and octave
+    u32int note_index = (octave * OCTAVE_SIZE) + note;
+    u32int frequency = (u32int)NOTES[note_index];
+
+    u32int phase_step =
+        (frequency * 65536u) / SB16_SAMPLE_RATE;
+
+    // Render the sound buffer with the calculated frequency and volume
+    for (u32int i = 0; i < DMA_BUFFER_SIZE; i++) {
+        sound_phase[0] += phase_step;
+
+        int amplitude = sound_wave_sample(
+            0,
+            waves[0],
+            sound_phase[0]
+        );
+
+        amplitude = (amplitude * volumes[0]) / 255;
+        amplitude = (amplitude * volume_master) / 255;
+
+        dma_buffer[i] = (u8int)(128 + amplitude);
+    }
 }

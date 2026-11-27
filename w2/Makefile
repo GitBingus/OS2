@@ -217,7 +217,7 @@ iso: $(ISO)
 run: $(ISO)
 	$(QEMU) \
 		-monitor telnet:127.0.0.1:45454,server,nowait \
-		-audiodev wav,id=snd0 \
+		-audiodev sdl,id=snd0 \
 		-device sb16,audiodev=snd0 \
 		-serial stdio \
 		-boot d \

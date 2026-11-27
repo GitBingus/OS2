@@ -404,6 +404,7 @@ void sound_master(u8int v); // Set the master volume
 void sound_volume(u8int index, u8int v); // Set the volume for a given index
 void sound_wave(u8int index, u8int wave); // Set the wave for a given index
 void sound_note_off(u8int index); // Turn off the note for a given index
+void sound_render_buffer(void); // Render the sound buffer for playback
 
 void music_play(void); // Start playing the music
 void music_stop(void); // Stop playing the music

@@ -399,7 +399,7 @@ void tetris_init(void) {
                     break;
                 }
 
-                case KEY_BACKSPACE: running = false; break;
+                case KEY_BACKSPACE: running = false; tui_clear(); break;  /* exit to shell */
                 default: break;
             }
         }
