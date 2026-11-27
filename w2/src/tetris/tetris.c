@@ -8,6 +8,11 @@
 #define SPLASH_WIDTH   9
 #define SPLASH_HEIGHT  9
 
+#define SPLASH_TITLE_SCALE_PCT   70    /* TETRIS size: 100 = fill the screen width, lower = smaller */
+#define SPLASH_PROMPT_SCALE_PCT  100   /* PRESS ENTER size, same scale */
+#define SPLASH_SPACING_CELLS     3     /* gap between title and prompt, in title cells */
+#define SPLASH_RAISE_PX          60    /* move the whole block up by this many pixels */
+
 static const u32int tetris_palette[16] = {   /* standard VGA colours */
     RGB(0,0,0),       RGB(0,0,170),     RGB(0,170,0),     RGB(0,170,170),
     RGB(170,0,0),     RGB(170,0,170),   RGB(170,85,0),    RGB(170,170,170),
@@ -79,41 +84,100 @@ static u32int tetris_darken(u32int c, u32int percent) {
     return RGB(r, g, b);
 }
 
-void show_splashscreen(void) {
-    const tetris_splashscreen_t *ss = &tetris_splashscreen;   /* pointer, so no struct copy */
+static const splash_glyph_t *splash_find_glyph(char c) {
+    u32int count = sizeof(splash_glyphs) / sizeof(splash_glyphs[0]);
 
+    for (u32int i = 0; i < count; i++) {
+        if (splash_glyphs[i].c == c) return &splash_glyphs[i];
+    }
+    return &splash_glyphs[count - 1];          /* fall back to the blank ' ' entry */
+}
+
+static void splash_draw_cell(u32int x, u32int y, u32int size, bool on, u32int colour) {
+    if (size < 3) return;                      /* need size - 2 > 0 */
+
+    if (on) {
+        tetris_draw_block(x + 1, y + 1, size - 2, colour);
+    } else {
+        display_draw_rect(x + 1, y + 1, size - 2, size - 2, RGB(0, 0, 0));
+    }
+}
+
+void show_splashscreen(void) {
+    const tetris_splashscreen_t *ss = &tetris_splashscreen;
+    const char *text = "PRESS ENTER TO BEGIN";
+
+    /* Title: 6 letters of 9x9 with a one-column gap */
     const u32int letters = 6;
     const u32int rows    = 9;
     const u32int cols    = 9;
-    const u32int gap     = 1;                                 /* blank columns between letters */
-    const u32int total_cols = letters * cols + (letters - 1) * gap;   /* 59 */
+    const u32int gap     = 1;
+    const u32int title_cols = letters * cols + (letters - 1) * gap;     /* 59 */
+
+    /* Prompt: 5x7 glyphs with a one-column gap */
+    u32int msg_len = 0;
+    while (text[msg_len]) msg_len++;
+    const u32int msg_cols = msg_len * 6 - 1;                            /* 119 for this text */
 
     u32int screen_w = graphics_get_width();
     u32int screen_h = graphics_get_height();
 
-    u32int cell = screen_w / (total_cols + 5);                /* a few columns of margin */
-    if (cell < 3) cell = 3;                                   /* tetris_draw_block needs size - 2 > 0 */
+    /* Cell sizes: fit the width, then scale by the tuning percentage */
+    u32int title_cell = (screen_w / (title_cols + 5)) * SPLASH_TITLE_SCALE_PCT / 100;
+    u32int msg_cell   = (screen_w / (msg_cols + 8))   * SPLASH_PROMPT_SCALE_PCT / 100;
 
-    u32int origin_x = (screen_w - total_cols * cell) / 2;
-    u32int origin_y = (screen_h - rows * cell) / 2;
+    if (title_cell < 3) title_cell = 3;
+    if (msg_cell   < 3) msg_cell   = 3;
 
+    /* Vertical layout: title, gap, prompt, centred as one block, then raised */
+    u32int title_h  = rows * title_cell;
+    u32int msg_h    = 7 * msg_cell;
+    u32int spacing  = SPLASH_SPACING_CELLS * title_cell;
+    u32int block_h  = title_h + spacing + msg_h;
+
+    u32int top = (block_h < screen_h) ? (screen_h - block_h) / 2 : 0;
+    top = (top > SPLASH_RAISE_PX) ? top - SPLASH_RAISE_PX : 0;
+
+    u32int title_y = top;
+    u32int msg_y   = top + title_h + spacing;
+
+    /* Horizontal layout: each part centred on its own width */
+    u32int title_x = (screen_w - title_cols * title_cell) / 2;
+    u32int msg_x   = (screen_w - msg_cols * msg_cell) / 2;
+
+    /* Draw the title */
     for (u32int letter = 0; letter < letters; letter++) {
-        u32int colour = tetris_palette[(u32int)rand() % 15 + 1];   /* one colour per letter, never black */
+        u32int colour = tetris_palette[(u32int)rand() % 15 + 1];        /* never black */
 
         for (u32int row = 0; row < rows; row++) {
             for (u32int col = 0; col < cols; col++) {
-                u32int px = origin_x + (letter * (cols + gap) + col) * cell;
-                u32int py = origin_y + row * cell;
+                u32int px = title_x + (letter * (cols + gap) + col) * title_cell;
+                u32int py = title_y + row * title_cell;
 
-                if (ss->tiles[letter][row][col] == 1) {
-                    tetris_draw_block(px + 1, py + 1, cell - 2, colour);
-                } else {
-                    display_draw_rect(px + 1, py + 1, cell - 2, cell - 2, RGB(20, 20, 20));
-                }
+                splash_draw_cell(px, py, title_cell,
+                                 ss->tiles[letter][row][col] == 1, colour);
+            }
+        }
+    }
+
+    /* Draw the prompt */
+    for (u32int i = 0; i < msg_len; i++) {
+        const splash_glyph_t *glyph = splash_find_glyph(text[i]);
+        u32int colour = tetris_palette[(u32int)rand() % 15 + 1];
+
+        for (u32int row = 0; row < 7; row++) {
+            for (u32int col = 0; col < 5; col++) {
+                bool on = (glyph->rows[row] >> (4 - col)) & 1;
+
+                u32int px = msg_x + (i * 6 + col) * msg_cell;
+                u32int py = msg_y + row * msg_cell;
+
+                splash_draw_cell(px, py, msg_cell, on, colour);
             }
         }
     }
 }
+
 
 static void tetris_wait_for_start(void) {
     keyboard_event_t event;
@@ -292,7 +356,6 @@ static void tetris_piece_init(tetris_piece_t *p, int type) {
 void tetris_init(void) {
     display_clear();
     show_splashscreen();
-    tui_write("TETRIS\n\n\n\nPRESS ENTER TO PLAY");
     tetris_wait_for_start();
 
     display_clear();
