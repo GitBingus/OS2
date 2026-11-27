@@ -2,6 +2,7 @@
 #include "display.h"
 #include "pit.h"
 #include "random.h"
+#include "pmm.h"
 
 #define SPLASH_LETTERS 6
 #define SPLASH_WIDTH   9
@@ -31,6 +32,10 @@ static void tetris_layout(void) {
 
 static void tetris_draw_cell(int cx, int cy, unsigned char colour_index) {
     if (cx < 0 || cx >= WIDTH || cy < 0 || cy >= HEIGHT) return;
+
+    // cx is the column index (0 to WIDTH-1), cy is the row index (0 to HEIGHT-1)
+    // cy is the vertical position, so we need to invert it to draw from the top of the screen
+    // colour_index is the index into the tetris_palette array, where 0 is empty and 1-15 are the colours of the tetrominoes
 
     u32int x = board_x + (u32int)cx * cell_size;
     u32int y = board_y + (u32int)cy * cell_size;
@@ -75,7 +80,39 @@ static u32int tetris_darken(u32int c, u32int percent) {
 }
 
 void show_splashscreen(void) {
-    /* remake for graphics mode */
+    const tetris_splashscreen_t *ss = &tetris_splashscreen;   /* pointer, so no struct copy */
+
+    const u32int letters = 6;
+    const u32int rows    = 9;
+    const u32int cols    = 9;
+    const u32int gap     = 1;                                 /* blank columns between letters */
+    const u32int total_cols = letters * cols + (letters - 1) * gap;   /* 59 */
+
+    u32int screen_w = graphics_get_width();
+    u32int screen_h = graphics_get_height();
+
+    u32int cell = screen_w / (total_cols + 5);                /* a few columns of margin */
+    if (cell < 3) cell = 3;                                   /* tetris_draw_block needs size - 2 > 0 */
+
+    u32int origin_x = (screen_w - total_cols * cell) / 2;
+    u32int origin_y = (screen_h - rows * cell) / 2;
+
+    for (u32int letter = 0; letter < letters; letter++) {
+        u32int colour = tetris_palette[(u32int)rand() % 15 + 1];   /* one colour per letter, never black */
+
+        for (u32int row = 0; row < rows; row++) {
+            for (u32int col = 0; col < cols; col++) {
+                u32int px = origin_x + (letter * (cols + gap) + col) * cell;
+                u32int py = origin_y + row * cell;
+
+                if (ss->tiles[letter][row][col] == 1) {
+                    tetris_draw_block(px + 1, py + 1, cell - 2, colour);
+                } else {
+                    display_draw_rect(px + 1, py + 1, cell - 2, cell - 2, RGB(20, 20, 20));
+                }
+            }
+        }
+    }
 }
 
 static void tetris_wait_for_start(void) {

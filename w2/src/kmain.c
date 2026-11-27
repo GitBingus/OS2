@@ -105,12 +105,12 @@ void kmain(u32int ebx) {
     serial_write("[OK] Heap memory manager\n");
     serial_write("[OK] Paging enabled\n");
 
-    serial_write("[OK] Graphics enabled\n");
-
     // Initialise graphics
     if (!(graphics_init(mb_info))) {
         kernel_panic("GPU Could not be enabled");
     }
+
+    serial_write("[OK] Graphics enabled\n");
 
     serial_write("Framebuffer virtual pointer: ");
     serial_write_hex((u32int)framebuffer.pixels);
@@ -149,7 +149,7 @@ void kmain(u32int ebx) {
     font_init();
 
     display_setcolour(RGB(255, 255, 255), RGB(0, 0, 0));
-    display_write("[OK] Font initialised\n");
+    serial_write("[OK] Font initialised\n");
 
     // Initialise the PIT
     pit_init(PIT_DEFAULT_FREQUENCY);
@@ -164,26 +164,21 @@ void kmain(u32int ebx) {
 
     __asm__ volatile("sti");
 
+    serial_write("SB16 debug stage: ");
     serial_write_u32(sb16_debug_stage);
     serial_write("\n");
 
+    serial_write("SB16 write value: ");
     serial_write_u32(sb16_write_value);
     serial_write("\n");
 
+    serial_write("SB16 last write status: ");
     serial_write_u32(sb16_last_write_status);
     serial_write("\n");
 
+    serial_write("SB16 write attempts: ");
     serial_write_u32(sb16_write_attempts);
     serial_write("\n");
-
-    // serial_write("Testing tetrominoes:\n");
-    // tetromino_debug(&tetrominoes[TETROMINO_TYPE_I]);
-    // tetromino_debug(&tetrominoes[TETROMINO_TYPE_O]);
-    // tetromino_debug(&tetrominoes[TETROMINO_TYPE_J]);
-    // tetromino_debug(&tetrominoes[TETROMINO_TYPE_L]);
-    // tetromino_debug(&tetrominoes[TETROMINO_TYPE_Z]);
-    // tetromino_debug(&tetrominoes[TETROMINO_TYPE_S]);
-    // tetromino_debug(&tetrominoes[TETROMINO_TYPE_T]);
 
     // Shell should normally never return
     shell_init();
